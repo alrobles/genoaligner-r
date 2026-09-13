@@ -1,0 +1,31 @@
+Package: genoaligner
+Type: Package
+Title: GPU-Portable Pairwise Sequence Alignment (WFA + Smith-Waterman)
+Version: 0.1.0
+Authors@R:
+    person("Angel", "Robles-Fernandez", role = c("aut", "cre"),
+           email = "a.l.robles.fernandez@gmail.com")
+Description: Pairwise sequence alignment from one portable C++17 core: edit-distance
+    (Levenshtein / WFA-equivalent) and Smith-Waterman local alignment, both with score
+    and CIGAR reconstruction. The core builds and runs anywhere (it is the CPU backend,
+    so it needs no GPU toolchain); the wavefront/GPU backend (ROCm/CUDA) computes the
+    same results with acceleration and is tracked in the sibling C++ repository. A batch
+    API aligns many pairs in one call and reports how many were resolved, so silent
+    under-serving is impossible. Designed to slot into data.frame/tibble pipelines.
+URL: https://github.com/alrobles/genoaligner-r, https://alrobles.github.io/genoaligner-r/
+BugReports: https://github.com/alrobles/genoaligner-r/issues
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports:
+    Rcpp
+LinkingTo: Rcpp
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+SystemRequirements: C++17
+NeedsCompilation: yes
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0

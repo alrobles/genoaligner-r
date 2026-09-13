@@ -1,0 +1,22 @@
+This package is the R binding of the `genoaligner` C++ alignment library
+(https://github.com/alrobles/genoaligner), distributed under the MIT License
+(see LICENSE).
+
+PARTIAL DERIVATION NOTICE
+
+The edit-distance / wavefront (WFA) core is a transcription of the published
+WFA formulation, taken from the reference implementation that the C++
+`genoaligner` library itself transcribes:
+
+    github.com/smarco/WFA
+    Copyright (c) 2017 Santiago Marco-Sola
+    MIT License
+
+Specifically, the offset macros (WAVEFRONT_H / WAVEFRONT_V /
+WAVEFRONT_OFFSET_NULL), the compute-next step (wavefront_compute_edit_idm)
+and the traceback walk originate from that source. The MIT terms of the
+original apply to those portions, and its copyright notice is reproduced
+above.
+
+The Smith-Waterman core, the R wrapper, the validation harness and the
+documentation in this repository are original work by the copyright holder.

@@ -1,0 +1,4 @@
+useDynLib(genoaligner, .registration = TRUE)
+import(Rcpp)
+export(align)
+export(align_sw)
