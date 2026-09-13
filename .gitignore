@@ -30,3 +30,7 @@ docs/
 *.tar.gz
 *.Rproj
 .Rproj.user/
+
+# knitted vignette intermediates (site built in CI from .Rmd)
+vignettes/*.md
+vignettes/*.html
