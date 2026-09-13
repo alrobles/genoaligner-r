@@ -1,5 +1,5 @@
 # genoaligner — synthetic alignment smoke test (runs on a Q6000 GPU node).
-# The v0.1.0 CPU core does the alignment; --nv makes the Q6000 visible in the
+# The v1.0.0 CPU core does the alignment; --nv makes the Q6000 visible in the
 # container. This validates the controlled environment end to end.
 suppressMessages(library(genoaligner))
 cat("=== genoaligner synthetic alignment smoke test ===\n")
