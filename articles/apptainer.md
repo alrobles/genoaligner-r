@@ -26,14 +26,14 @@ Bootstrap: docker
 From: rocker/r-ver:4.4.1
 
 %files
-    genoaligner_0.1.0.tar.gz /opt/
+    genoaligner_1.0.0.tar.gz /opt/
 
 %post
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
     apt-get install -y --no-install-recommends g++ make ca-certificates
     R -e 'install.packages("Rcpp", repos="https://cloud.r-project.org", quiet=TRUE)'
-    R CMD INSTALL /opt/genoaligner_0.1.0.tar.gz
+    R CMD INSTALL /opt/genoaligner_1.0.0.tar.gz
     R -e 'library(genoaligner); stopifnot(align("ACGT","ACGT",smax=8)$score==0); cat("BUILD_CORE_OK\n")'
 
 %runscript
