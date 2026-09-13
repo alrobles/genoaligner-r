@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/alrobles/genoaligner-r/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/alrobles/genoaligner-r/blob/v1.0.0/DESCRIPTION)
 
 Robles-Fernandez A (2026). *genoaligner: GPU-Portable Pairwise Sequence
 Alignment (WFA + Smith-Waterman)*. R package version 1.0.0,
