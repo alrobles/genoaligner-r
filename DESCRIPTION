@@ -1,7 +1,7 @@
 Package: genoaligner
 Type: Package
 Title: GPU-Portable Pairwise Sequence Alignment (WFA + Smith-Waterman)
-Version: 1.0.0
+Version: 1.0.0.9000
 Authors@R:
     person("Angel", "Robles-Fernandez", role = c("aut", "cre"),
            email = "a.l.robles.fernandez@gmail.com")

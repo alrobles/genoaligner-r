@@ -1,3 +1,5 @@
+# genoaligner (development version)
+
 # genoaligner 1.0.0
 
 Initial release.
