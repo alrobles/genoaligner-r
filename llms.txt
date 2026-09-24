@@ -68,6 +68,8 @@ See the package vignette and function reference in the
 - [`genoaligner-package`](https://alrobles.github.io/genoaligner-r/reference/genoaligner-package.md)
   [`genoaligner`](https://alrobles.github.io/genoaligner-r/reference/genoaligner-package.md)
   : genoaligner: GPU-portable pairwise sequence alignment
+- [`lepus_cytb`](https://alrobles.github.io/genoaligner-r/reference/lepus_cytb.md)
+  : Cytochrome b sequences from four leporid species
 
 # Articles
 
@@ -77,3 +79,7 @@ See the package vignette and function reference in the
   Apptainer](https://alrobles.github.io/genoaligner-r/articles/apptainer.md):
 - [Aligning sequences with
   genoaligner](https://alrobles.github.io/genoaligner-r/articles/intro.md):
+- [Case study: hare cytochrome b
+  fragments](https://alrobles.github.io/genoaligner-r/articles/lepus-cytb.md):
+- [Three pipeline use
+  cases](https://alrobles.github.io/genoaligner-r/articles/simulated-use-cases.md):

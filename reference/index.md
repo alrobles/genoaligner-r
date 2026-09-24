@@ -9,3 +9,5 @@
 - [`genoaligner-package`](https://alrobles.github.io/genoaligner-r/reference/genoaligner-package.md)
   [`genoaligner`](https://alrobles.github.io/genoaligner-r/reference/genoaligner-package.md)
   : genoaligner: GPU-portable pairwise sequence alignment
+- [`lepus_cytb`](https://alrobles.github.io/genoaligner-r/reference/lepus_cytb.md)
+  : Cytochrome b sequences from four leporid species

@@ -1,0 +1,136 @@
+# Three pipeline use cases
+
+Three small, fully simulated pipelines that show where the bounded,
+data-frame-native alignment model earns its keep. No external files;
+every example runs in milliseconds.
+
+## 1. Off-target candidate scoring (bounded edit distance)
+
+Off-target search is the natural habitat of *bounded* alignment:
+candidate sites only matter when they sit within a few edits of the
+guide — anything beyond ~5 is noise you should never see. `smax` is that
+cutoff, made explicit.
+
+``` r
+
+rand_seq <- function(n, len)
+    vapply(seq_len(n), function(i)
+        paste0(sample(c("A", "C", "G", "T"), len, replace = TRUE), collapse = ""),
+        character(1))
+
+guide <- "GAGTCCGAGCAGAAGAAGAA"   # a 20-nt spacer (EMX1-like)
+# 200 random candidate sites; plant a handful at known distances
+candidates <- rand_seq(200, 20)
+mutate <- function(s, k) {
+    x <- strsplit(s, "")[[1]]
+    pos <- sample(seq_along(x), k)
+    x[pos] <- vapply(x[pos], function(b)
+        sample(setdiff(c("A", "C", "G", "T"), b), 1), character(1))
+    paste0(x, collapse = "")
+}
+planted <- c(mutate(guide, 1), mutate(guide, 2), mutate(guide, 3), mutate(guide, 4))
+candidates[1:4] <- planted
+
+hits <- align(candidates, guide, smax = 4, with_cigar = TRUE)
+table(hits$resolved)
+#> 
+#> FALSE  TRUE 
+#>   196     4
+hits[hits$resolved, ]
+#>   score resolved                cigar rescore_ok wellformed_ok
+#> 1     1     TRUE MMMXMMMMMMMMMMMMMMMM       TRUE          TRUE
+#> 2     2     TRUE MMMMMMMMXMMMXMMMMMMM       TRUE          TRUE
+#> 3     3     TRUE XMMMMMMMMMMXMMMMXMMM       TRUE          TRUE
+#> 4     4     TRUE MMMMXMMXMXMMMMMMMMMX       TRUE          TRUE
+```
+
+Only the planted sites resolve — the 196 random candidates are reported
+`resolved = FALSE` rather than returned with meaningless large
+distances. With a plain `stringdist`-style call you would get 200
+numbers and the cutoff would live in your head; here it is part of the
+computation.
+
+## 2. Adapter contamination scan (local alignment)
+
+[`align_sw()`](https://alrobles.github.io/genoaligner-r/reference/align_sw.md)
+answers “does this short motif occur *anywhere* in this read, and
+where?” — coordinates included.
+
+``` r
+
+adapter <- "AGATCGGAAGAGCACACGTC"   # standard Illumina TruSeq adapter
+reads <- c(
+    clean   = paste0(rand_seq(1, 80)),
+    partial = paste0(rand_seq(1, 50), substr(adapter, 1, 14)),
+    full    = paste0(rand_seq(1, 30), adapter)
+)
+scan <- align_sw(adapter, reads, scoring = c(2, -3, 5, 2))
+data.frame(read = names(reads), scan[, c("score", "start_j", "end_j", "cigar")])
+#>      read score start_j end_j                cigar
+#> 1   clean     9      47    53              MMMMXMM
+#> 2 partial    28      50    63       MMMMMMMMMMMMMM
+#> 3    full    40      30    49 MMMMMMMMMMMMMMMMMMMM
+```
+
+The clean read scores a residual 9 (the best random hit over 80 bp); the
+partial 3’-end adapter maps at position 50; the full adapter at 30.
+`start_j`/`end_j` tell you exactly where to trim — no extra bookkeeping.
+
+## 3. Read dereplication into haplotypes
+
+Amplicon data collapses reads that differ by sequencing error into
+observed haplotypes. With an error rate of ~1% on 150 bp reads, “same
+haplotype” means “within a couple of edits” — again a bounded question.
+
+``` r
+
+# three true haplotypes, 60 reads with ~1% per-base errors
+haplo <- rand_seq(3, 150)
+truth <- rep(1:3, each = 20)
+reads <- vapply(truth, function(h) {
+    x <- strsplit(haplo[h], "")[[1]]
+    err <- rbinom(length(x), 1, 0.01)
+    pos <- which(err == 1)
+    if (length(pos)) x[pos] <- sample(c("A", "C", "G", "T"), length(pos), replace = TRUE)
+    paste0(x, collapse = "")
+}, character(1))
+
+# greedy dereplication: each read joins the first centroid within 4 edits
+centroids <- character(0); assign <- integer(length(reads))
+for (i in seq_along(reads)) {
+    if (!length(centroids)) { centroids <- reads[i]; assign[i] <- 1; next }
+    d <- align(reads[i], centroids, smax = 4, with_cigar = FALSE)
+    hit <- which(d$resolved & d$score <= 4)[1]
+    if (is.na(hit)) { centroids <- c(centroids, reads[i]); assign[i] <- length(centroids) }
+    else assign[i] <- hit
+}
+table(found = assign, truth)
+#>      truth
+#> found  1  2  3
+#>    1  18  0  0
+#>    2   1  0  0
+#>    3   1  0  0
+#>    4   0 19  0
+#>    5   0  1  0
+#>    6   0  0 16
+#>    7   0  0  1
+#>    8   0  0  1
+#>    9   0  0  1
+#>    10  0  0  1
+length(centroids)
+#> [1] 10
+```
+
+The three dominant centroids recover the planted haplotypes (18/20,
+19/20 and 16/20 reads assigned). The remaining centroids are singletons:
+reads with more than ~4 accumulated errors that the greedy rule promotes
+instead of assigning — a known limitation of single-pass dereplication
+that the resolved/unresolved semantics at least makes *auditable* (every
+read either matched a centroid within the bound or visibly did not).
+
+## Why these three?
+
+All three share a shape that is awkward for file-oriented aligners and
+natural here: a **column of queries against a column of references**, a
+**bound that is part of the question**, and a result that is already a
+data.frame with validation flags attached. That is the whole interface.

@@ -4,7 +4,9 @@ pkgdown_sha: ~
 articles:
   apptainer: apptainer.html
   intro: intro.html
-last_built: 2026-09-24T17:12Z
+  lepus-cytb: lepus-cytb.html
+  simulated-use-cases: simulated-use-cases.html
+last_built: 2026-09-24T18:00Z
 urls:
   reference: https://alrobles.github.io/genoaligner-r/reference
   article: https://alrobles.github.io/genoaligner-r/articles

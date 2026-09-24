@@ -20,6 +20,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/apptainer.html">Reproducing the build with Apptainer</a></li>
     <li><a class="dropdown-item" href="../articles/intro.html">Aligning sequences with genoaligner</a></li>
+    <li><a class="dropdown-item" href="../articles/lepus-cytb.html">Case study: hare cytochrome b fragments</a></li>
+    <li><a class="dropdown-item" href="../articles/simulated-use-cases.html">Three pipeline use cases</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -39,13 +41,15 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="genoaligner-development-version">genoaligner (development version)<a class="anchor" aria-label="anchor" href="#genoaligner-development-version"></a></h2>
-</div>
+<ul><li>New dataset <code>lepus_cytb</code>: 37 real NCBI cytochrome b records for three hare species plus an <em>Oryctolagus</em> outgroup (mixed lengths, includes two mislabelled records used as a QC teaching case).</li>
+<li>New vignettes: <code>lepus-cytb</code> (real-data case study: locus QC, common-window cropping, barcode gap, <code>smax</code> semantics) and <code>simulated-use-cases</code> (bounded off-target scoring, adapter scan, read dereplication).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="genoaligner-100">genoaligner 1.0.0<a class="anchor" aria-label="anchor" href="#genoaligner-100"></a></h2><p class="text-muted">CRAN release: 2026-09-24</p>
 <p>Initial release.</p>
 <ul><li>Edit-distance (Levenshtein / WFA-equivalent) and Smith-Waterman local alignment from a self-contained C++17 CPU core; both with score and CIGAR.</li>
 <li>Pipeline-friendly, vectorised <code><a href="../reference/align.html">align()</a></code> and <code><a href="../reference/align_sw.html">align_sw()</a></code> over data.frame/tibble pair columns; <code>smax</code>-bounded resolution that reports unresolved pairs rather than returning silently wrong scores.</li>
-<li>Cran-buildable and checkable without a GPU toolchain; <code>R CMD check</code> clean.</li>
+<li>CRAN-buildable and checkable without a GPU toolchain; <code>R CMD check</code> clean.</li>
 <li>Apptainer recipe (<code>containers/</code>) to reproduce the build in a pinned cluster environment; verified on a KU HPC Q6000 node with <code>--gres</code> + <code>--nv</code>.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
