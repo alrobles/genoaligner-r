@@ -1,6 +1,10 @@
 # Changelog
 
+## genoaligner (development version)
+
 ## genoaligner 1.0.0
+
+CRAN release: 2026-09-24
 
 Initial release.
 

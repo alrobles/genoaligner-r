@@ -1,5 +1,8 @@
 # genoaligner
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/genoaligner)](https://CRAN.R-project.org/package=genoaligner)
+
 **Pairwise sequence alignment for R, from one portable C++17 core.**
 
 `genoaligner` provides edit-distance (Levenshtein / WFA-equivalent) and
@@ -17,6 +20,13 @@ align_sw(c("ACGTACGT", "GGGG"), "ACGTTCGT", scoring = c(2, -3, 5, 2))
 ```
 
 ## Install
+
+From CRAN:
+
+``` r
+
+install.packages("genoaligner")
+```
 
 From GitHub (development head):
 
