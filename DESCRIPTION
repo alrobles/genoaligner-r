@@ -1,17 +1,20 @@
 Package: genoaligner
 Type: Package
-Title: GPU-Portable Pairwise Sequence Alignment (WFA + Smith-Waterman)
-Version: 1.0.0.9000
+Title: GPU-Portable Pairwise and Codon-Aware Multiple Sequence Alignment
+Version: 2.0.0.9000
 Authors@R:
     person("Angel", "Robles-Fernandez", role = c("aut", "cre"),
            email = "a.l.robles.fernandez@gmail.com")
-Description: Pairwise sequence alignment from one portable C++17 core: edit-distance
-    (Levenshtein / WFA-equivalent) and Smith-Waterman local alignment, both with score
-    and CIGAR reconstruction. The core builds and runs anywhere (it is the CPU backend,
-    so it needs no GPU toolchain); the wavefront/GPU backend (ROCm/CUDA) computes the
-    same results with acceleration and is tracked in the sibling C++ repository. A batch
-    API aligns many pairs in one call and reports how many were resolved, so silent
-    under-serving is impossible. Designed to slot into data.frame/tibble pipelines.
+Description: Sequence alignment from one portable C++17 core: edit-distance
+    (Levenshtein / WFA-equivalent) and Smith-Waterman local pairwise alignment with
+    score and CIGAR reconstruction, plus multiple sequence alignment in DNA, protein
+    and codon-aware modes (MACSE-class: whole-codon indels that preserve the reading
+    frame, optional frameshift refinement). The core builds and runs anywhere (it is
+    the CPU backend, so it needs no GPU toolchain); the wavefront/GPU backend
+    (ROCm/CUDA) computes the same results with acceleration and is tracked in the
+    sibling C++ repository. A batch API aligns many pairs in one call and reports how
+    many were resolved, so silent under-serving is impossible. Designed to slot into
+    data.frame/tibble pipelines.
 URL: https://github.com/alrobles/genoaligner-r, https://alrobles.github.io/genoaligner-r/
 BugReports: https://github.com/alrobles/genoaligner-r/issues
 License: MIT + file LICENSE
@@ -25,7 +28,8 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    spelling
+    spelling,
+    ape
 SystemRequirements: C++17
 NeedsCompilation: yes
 Config/testthat/edition: 3
