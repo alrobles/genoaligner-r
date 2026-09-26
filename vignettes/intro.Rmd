@@ -18,7 +18,7 @@ and it does not recruit candidates.
 
 Two entry points cover the two standard pairwise problems:
 
-* `align()` — **edit distance** (Levenshtein; the WFA-equivalent score) with an
+* `align_edit()` — **edit distance** (Levenshtein; the WFA-equivalent score) with an
   optional CIGAR.
 * `align_sw()` — **Smith-Waterman** local alignment with affine gaps, CIGAR,
   and the aligned span's coordinates.
@@ -26,7 +26,7 @@ Two entry points cover the two standard pairwise problems:
 ## Edit distance
 
 ```{r}
-align("ACGTACGT", "ACGTTCGT", smax = 8)
+align_edit("ACGTACGT", "ACGTTCGT", smax = 8)
 ```
 
 By default `smax = 64`: a pair is *resolved* only when its true equal-cost edit
@@ -42,7 +42,7 @@ pairs <- data.frame(
   query     = c("ACGTACGT", "GGGG",    "TTTTCCCC", "AAAACCCC"),
   reference = c("ACGTTCGT", "ACGT",    "TTTTCGCG", "AAAATTTT")
 )
-pairs$result <- align(pairs$query, pairs$reference, smax = 8)
+pairs$result <- align_edit(pairs$query, pairs$reference, smax = 8)
 pairs
 ```
 

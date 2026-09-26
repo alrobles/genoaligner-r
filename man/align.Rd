@@ -2,7 +2,7 @@
 % Please edit documentation in R/align.R
 \name{align}
 \alias{align}
-\title{Align pairs by edit distance}
+\title{Align pairs by edit distance (deprecated alias)}
 \usage{
 align(pattern, text, smax = 64, with_cigar = TRUE)
 }
@@ -20,30 +20,12 @@ Pairs whose true distance exceeds it are unresolved by design.}
 no traceback) and \code{cigar} is \code{NA}.}
 }
 \value{
-A data.frame with one row per pair and columns:
-\code{score} (edit distance, \code{NA} if unresolved), \code{resolved}
-(logical), \code{cigar} (over \{M, X, I, D\}, \code{NA} if unresolved or
-\code{!with_cigar}), \code{rescore_ok} and \code{wellformed_ok}
-(validation flags computed in the library).
-
-CIGAR convention (identical for \code{align} and \code{align_sw}):
-\code{M}/\code{X} consume a text and a pattern base; \code{I} consumes an
-extra \emph{text} base; \code{D} consumes an extra \emph{pattern} base.
+See \code{\link{align_edit}}.
 }
 \description{
-Computes the Levenshtein edit distance (substitution = 1, insertion = 1,
-deletion = 1) between each pair of sequences, with an optional CIGAR
-reconstruction. This is the same distance the WFA formulation computes;
-wavefront/GPU speed is a backend concern, the result is identical.
+\code{align()} is deprecated in favour of \code{\link{align_edit}()}: the
+generic name collides with \pkg{Biostrings}/\pkg{IRanges} exports in
+sessions that load both. It still works and returns identical results;
+new code should call \code{align_edit()}.
 }
-\details{
-A pair is \emph{resolved} only when its true distance is at most \code{smax};
-otherwise \code{score} is \code{NA} and the pair is reported as
-\code{resolved = FALSE}. The count of resolved pairs is deliberately visible:
-a caller that only reads scores can silently miss that most input was
-abandoned when \code{smax} is set too tightly.
-}
-\examples{
-align("ACGTACGT", "ACGTTCGT", smax = 8)
-align(c("AAAACCC", "ACGT"), c("AAAATCC", "ACCT"), smax = 8)
-}
+\keyword{internal}

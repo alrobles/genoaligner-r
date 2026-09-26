@@ -1,0 +1,134 @@
+---
+title: "Codon-aware MSA: hare cytochrome b"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Codon-aware MSA: hare cytochrome b}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6)
+library(genoaligner)
+```
+
+The `lepus-cytb` vignette used bounded edit distance to check which records
+really are cytochrome b. The next step in any marker pipeline is the multiple
+sequence alignment — and for a *coding* gene the choice of aligner mode is a
+biological decision, not a cosmetic one:
+
+> Frameshift-indifferent alignment inserts indels anywhere, breaking the
+> reading frame and turning a clean indel history into apparent nonsense.
+> Codon-aware alignment only ever inserts whole codons, so a real in-frame
+> deletion looks like what it is.
+
+`msa_codon()` does the second thing. This vignette aligns the 37 real cytb
+records from `?lepus_cytb` under the vertebrate mitochondrial code
+(`gc = 2` — TGA is tryptophan here, not a stop).
+
+## The alignment
+
+```{r}
+data(lepus_cytb)
+
+a <- msa_codon(lepus_cytb$sequence, names = lepus_cytb$accession, gc = 2)
+a
+```
+
+One call, ~2.5 seconds, a 37 × `r ncol(a$aligned)` alignment. Because every
+indel is a whole codon, every row stays a multiple of 3:
+
+```{r}
+stopifnot(ncol(a$aligned) %% 3 == 0)
+```
+
+## What the QC already knows
+
+`msa_codon` tokenizes each sequence to codons before aligning, and reports
+what it found — the chosen reading `frame`, the `n_stops` count in that
+frame, and `partial` (a trailing partial codon or held-out frameshift
+blocks). The QC travels with the result; no separate pass is needed:
+
+```{r}
+qc <- cbind(lepus_cytb[c("accession", "species")], a$qc)
+qc[order(-qc$n_stops, -qc$partial), ][1:8, ]
+```
+
+Perfect cytb records score `n_stops = 0, partial = 0`. The records that do
+not are exactly the ones the pairwise vignette flags as suspects — records
+whose best frame still contains a stop codon are typically the mislabelled
+or non-cytb accessions, and `partial > 0` marks fragments that do not end on
+a codon boundary. That is the same QC story MACSE reports, emitted here as
+an ordinary data.frame column.
+
+## Frame integrity: codon mode vs plain DNA mode
+
+Align the same records as plain DNA:
+
+```{r}
+d <- msa_align(lepus_cytb$sequence, names = lepus_cytb$accession)
+d
+```
+
+Both alignments are valid outputs of their own rules — but they answer
+different questions. In DNA mode an indel can be any width; in codon mode it
+cannot. To see it concretely, take two sequences where one carries a
+two-codon deletion:
+
+```{r}
+# a complete-cds record vs a fragment missing two codons
+full <- lepus_cytb$sequence[2]
+frag <- paste0(substr(full, 1, 60), substr(full, 67, nchar(full)))
+
+cod <- as.matrix(msa_codon(c(full = full, frag = frag), gc = 2))
+dna <- as.matrix(msa_align(c(full = full, frag = frag)))
+
+# first gap position in each alignment
+gap <- function(row) min(which(row == "-"))
+cat("codon-mode gap starts at column:", gap(cod["frag", ]), "\n")
+cat("  (multiple of 3 ->", (gap(cod["frag", ]) - 1) %% 3 == 0, ")\n")
+cat("dna-mode   gap starts at column:", gap(dna["frag", ]), "\n")
+```
+
+In codon mode the deletion is placed as codons — the aligned fragment reads
+as clean amino acids end to end. That is the difference that matters when
+the alignment feeds a partition file, a codon model, or a tree search.
+
+## Frameshift refinement
+
+`msa_codon(..., refine = TRUE)` adds a MACSE-style stage-2 pass that
+reintroduces real 1-2 nt frameshift events as narrow columns instead of
+forcing them through whole-codon indels. The result is a nucleotide MSA that
+is *not* guaranteed to be a multiple of 3 — on purpose, because sequences
+that genuinely carry frameshifts should not be aligned as if they did not:
+
+```{r}
+r <- msa_codon(c("ATGATAATCACCTGA", "ATGATTACACCTGA"), gc = 2, refine = TRUE)
+as.character(r)
+```
+
+## Interoperability
+
+The result is an ordinary character matrix underneath:
+
+```{r}
+m <- as.matrix(a)
+m[1:2, 1:24]
+```
+
+`as.character(a)` emits FASTA records ready for `writeLines()`, and with
+**ape** installed `as_dnabin(a)` coerces straight to `DNAbin`:
+
+```{r, eval=requireNamespace("ape", quietly = TRUE)}
+library(ape)
+bin <- as_dnabin(a)
+bin[1:3, 1:15]
+```
+
+## Where this engine lives
+
+The R package ships the host path of the same C++17 core the GPU library
+uses. On the sibling repository the identical engine runs as a level-batched
+GPU driver verified bit-exact against this host path — so an alignment
+produced here and one produced on the GPU cluster are byte-identical, not
+merely similar.
