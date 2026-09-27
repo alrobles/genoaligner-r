@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">genoaligner</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/apptainer.html">Reproducing the build with Apptainer</a></li>
     <li><a class="dropdown-item" href="../articles/intro.html">Aligning sequences with genoaligner</a></li>
     <li><a class="dropdown-item" href="../articles/lepus-cytb.html">Case study: hare cytochrome b fragments</a></li>
+    <li><a class="dropdown-item" href="../articles/msa-codon-lepus.html">Codon-aware MSA: hare cytochrome b</a></li>
     <li><a class="dropdown-item" href="../articles/simulated-use-cases.html">Three pipeline use cases</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -40,7 +41,19 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="genoaligner-development-version">genoaligner (development version)<a class="anchor" aria-label="anchor" href="#genoaligner-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="2.0.0.9000" id="genoaligner-2009000-development">genoaligner 2.0.0.9000 (development)<a class="anchor" aria-label="anchor" href="#genoaligner-2009000-development"></a></h2>
+<ul><li>
+<strong>Breaking</strong>: <code><a href="../reference/align.html">align()</a></code> renamed to <code><a href="../reference/align_edit.html">align_edit()</a></code> — the generic name collides with <code>Biostrings</code>/<code>IRanges</code> exports in mixed sessions. <code><a href="../reference/align.html">align()</a></code> remains as a deprecated alias returning identical results.</li>
+<li>New multiple-sequence-alignment API over the same portable C++17 core (vendored host engine, verified bit-exact against the GPU driver in the sibling C++ repository):
+<ul><li>
+<code>msa_align(seqs, mode = "dna" | "protein")</code> — progressive profile-profile MSA with a deterministic NJ guide tree.</li>
+<li>
+<code>msa_codon(seqs, gc = 1 | 2, refine = FALSE)</code> — MACSE-class codon-aware MSA: whole-codon indels preserve the reading frame; <code>refine = TRUE</code> runs a frameshift-refinement pass producing a nucleotide MSA.</li>
+</ul></li>
+<li>Both return S3 objects of class <code>genoaligner_msa</code> (<code>$aligned</code> character matrix, <code>$qc</code> per-sequence QC — frame / stop codons / partial codons in codon mode —, <code>$params</code>), with <code>print</code>/<code>as.matrix</code>/<code>as.character</code> methods and optional <code><a href="https://rdrr.io/pkg/ape/man/DNAbin.html" class="external-link">ape::DNAbin</a></code> coercion via <code><a href="../reference/as_dnabin.html">as_dnabin()</a></code>.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.0.9000" id="genoaligner-1009000">genoaligner 1.0.0.9000<a class="anchor" aria-label="anchor" href="#genoaligner-1009000"></a></h2>
 <ul><li>New dataset <code>lepus_cytb</code>: 37 real NCBI cytochrome b records for three hare species plus an <em>Oryctolagus</em> outgroup (mixed lengths, includes two mislabelled records used as a QC teaching case).</li>
 <li>New vignettes: <code>lepus-cytb</code> (real-data case study: locus QC, common-window cropping, barcode gap, <code>smax</code> semantics) and <code>simulated-use-cases</code> (bounded off-target scoring, adapter scan, read dereplication).</li>
 </ul></div>

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">genoaligner</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,7 @@
 <li><a class="dropdown-item" href="../articles/apptainer.html">Reproducing the build with Apptainer</a></li>
     <li><a class="dropdown-item" href="../articles/intro.html">Aligning sequences with genoaligner</a></li>
     <li><a class="dropdown-item" href="../articles/lepus-cytb.html">Case study: hare cytochrome b fragments</a></li>
+    <li><a class="dropdown-item" href="../articles/msa-codon-lepus.html">Codon-aware MSA: hare cytochrome b</a></li>
     <li><a class="dropdown-item" href="../articles/simulated-use-cases.html">Three pipeline use cases</a></li>
   </ul>
 </li>
@@ -103,7 +104,7 @@ state.</p>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>    <span class="ex">apt-get</span> install <span class="at">-y</span> <span class="at">--no-install-recommends</span> g++ make ca-certificates</span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>    <span class="ex">R</span> <span class="at">-e</span> <span class="st">'install.packages("Rcpp", repos="https://cloud.r-project.org", quiet=TRUE)'</span></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>    <span class="ex">R</span> CMD INSTALL /opt/genoaligner_1.0.0.tar.gz</span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>    <span class="ex">R</span> <span class="at">-e</span> <span class="st">'library(genoaligner); stopifnot(align("ACGT","ACGT",smax=8)$score==0); cat("BUILD_CORE_OK\n")'</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>    <span class="ex">R</span> <span class="at">-e</span> <span class="st">'library(genoaligner); stopifnot(align_edit("ACGT","ACGT",smax=8)$score==0); cat("BUILD_CORE_OK\n")'</span></span>
 <span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a></span>
 <span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="ex">%runscript</span></span>
 <span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>    <span class="bu">exec</span> Rscript <span class="st">"</span><span class="va">$@</span><span class="st">"</span></span></code></pre></div>

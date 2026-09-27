@@ -15,7 +15,7 @@ the European rabbit (Oryctolagus cuniculus) as an outgroup."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">genoaligner</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,6 +29,7 @@ the European rabbit (Oryctolagus cuniculus) as an outgroup."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/apptainer.html">Reproducing the build with Apptainer</a></li>
     <li><a class="dropdown-item" href="../articles/intro.html">Aligning sequences with genoaligner</a></li>
     <li><a class="dropdown-item" href="../articles/lepus-cytb.html">Case study: hare cytochrome b fragments</a></li>
+    <li><a class="dropdown-item" href="../articles/msa-codon-lepus.html">Codon-aware MSA: hare cytochrome b</a></li>
     <li><a class="dropdown-item" href="../articles/simulated-use-cases.html">Three pipeline use cases</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -103,6 +104,9 @@ to show that a near-zero local alignment score flags a mislabelled record.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   cuniculus   europaeus granatensis     timidus </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           8           8          13           8 </span>
 <span class="r-in"><span><span class="fu"><a href="align.html">align</a></span><span class="op">(</span><span class="va">lepus_cytb</span><span class="op">$</span><span class="va">sequence</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>, <span class="va">lepus_cytb</span><span class="op">$</span><span class="va">sequence</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, smax <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'align' is deprecated.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use 'align_edit' instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> See help("Deprecated")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   score resolved</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    89     TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     0     TRUE</span>

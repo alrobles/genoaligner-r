@@ -123,7 +123,7 @@ refs <- c(granatensis = "JF299036.1", timidus = "LC132658.1",
 
 for (sp in names(refs))
     keep[[paste0("d_", sp)]] <-
-        align(keep$frag, pick(refs[sp]), smax = 511, with_cigar = FALSE)$score
+        align_edit(keep$frag, pick(refs[sp]), smax = 511, with_cigar = FALSE)$score
 
 d <- aggregate(cbind(d_granatensis, d_timidus, d_europaeus, d_cuniculus) ~ species,
                keep, median)
@@ -145,10 +145,10 @@ works as a marker, and here it is computed with three calls.
 
 ids <- keep$accession
 within <- unlist(lapply(seq_len(nrow(keep)), function(i)
-    align(keep$frag[i], keep$frag[keep$species == keep$species[i] & ids != ids[i]],
+    align_edit(keep$frag[i], keep$frag[keep$species == keep$species[i] & ids != ids[i]],
           smax = 511, with_cigar = FALSE)$score))
 between <- unlist(lapply(seq_len(nrow(keep)), function(i)
-    align(keep$frag[i], keep$frag[keep$species != keep$species[i]],
+    align_edit(keep$frag[i], keep$frag[keep$species != keep$species[i]],
           smax = 511, with_cigar = FALSE)$score))
 
 br <- seq(0, max(c(within, between)) + 5, by = 5)
@@ -178,7 +178,7 @@ resolve:
 
 ``` r
 
-align(keep$frag, pick(refs["cuniculus"]), smax = 40, with_cigar = FALSE)$resolved |> table()
+align_edit(keep$frag, pick(refs["cuniculus"]), smax = 40, with_cigar = FALSE)$resolved |> table()
 #> 
 #> FALSE  TRUE 
 #>    28     5
@@ -190,7 +190,7 @@ wrong numbers. Raise the bound and they resolve, with the true scores:
 
 ``` r
 
-align(keep$frag, pick(refs["cuniculus"]), smax = 200, with_cigar = FALSE)$score |> range()
+align_edit(keep$frag, pick(refs["cuniculus"]), smax = 200, with_cigar = FALSE)$score |> range()
 #> [1]   0 119
 ```
 

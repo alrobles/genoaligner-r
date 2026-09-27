@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">genoaligner</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/apptainer.html">Reproducing the build with Apptainer</a></li>
     <li><a class="dropdown-item" href="../articles/intro.html">Aligning sequences with genoaligner</a></li>
     <li><a class="dropdown-item" href="../articles/lepus-cytb.html">Case study: hare cytochrome b fragments</a></li>
+    <li><a class="dropdown-item" href="../articles/msa-codon-lepus.html">Codon-aware MSA: hare cytochrome b</a></li>
     <li><a class="dropdown-item" href="../articles/simulated-use-cases.html">Three pipeline use cases</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -50,7 +51,7 @@
 
       <dl><dt>
 
-          <code><a href="align.html">align()</a></code>
+          <code><a href="align_edit.html">align_edit()</a></code>
 
         </dt>
         <dd>Align pairs by edit distance</dd>
@@ -61,6 +62,13 @@
 
         </dt>
         <dd>Smith-Waterman local alignment</dd>
+
+        <dt>
+
+          <code><a href="as_dnabin.html">as_dnabin()</a></code>
+
+        </dt>
+        <dd>Coerce a genoaligner_msa alignment to ape::DNAbin</dd>
 
         <dt>
 
@@ -75,6 +83,20 @@
 
         </dt>
         <dd>Cytochrome b sequences from four leporid species</dd>
+
+        <dt>
+
+          <code><a href="msa_align.html">msa_align()</a></code>
+
+        </dt>
+        <dd>Multiple sequence alignment (DNA or protein)</dd>
+
+        <dt>
+
+          <code><a href="msa_codon.html">msa_codon()</a></code>
+
+        </dt>
+        <dd>Codon-aware multiple sequence alignment</dd>
       </dl></div>
   </main></div>
 

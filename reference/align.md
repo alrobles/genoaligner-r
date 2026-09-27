@@ -1,9 +1,11 @@
-# Align pairs by edit distance
+# Align pairs by edit distance (deprecated alias)
 
-Computes the Levenshtein edit distance (substitution = 1, insertion = 1,
-deletion = 1) between each pair of sequences, with an optional CIGAR
-reconstruction. This is the same distance the WFA formulation computes;
-wavefront/GPU speed is a backend concern, the result is identical.
+`align()` is deprecated in favour of
+[`align_edit()`](https://alrobles.github.io/genoaligner-r/reference/align_edit.md):
+the generic name collides with Biostrings/IRanges exports in sessions
+that load both. It still works and returns identical results; new code
+should call
+[`align_edit()`](https://alrobles.github.io/genoaligner-r/reference/align_edit.md).
 
 ## Usage
 
@@ -34,31 +36,5 @@ align(pattern, text, smax = 64, with_cigar = TRUE)
 
 ## Value
 
-A data.frame with one row per pair and columns: `score` (edit distance,
-`NA` if unresolved), `resolved` (logical), `cigar` (over {M, X, I, D},
-`NA` if unresolved or `!with_cigar`), `rescore_ok` and `wellformed_ok`
-(validation flags computed in the library).
-
-CIGAR convention (identical for `align` and `align_sw`): `M`/`X` consume
-a text and a pattern base; `I` consumes an extra *text* base; `D`
-consumes an extra *pattern* base.
-
-## Details
-
-A pair is *resolved* only when its true distance is at most `smax`;
-otherwise `score` is `NA` and the pair is reported as
-`resolved = FALSE`. The count of resolved pairs is deliberately visible:
-a caller that only reads scores can silently miss that most input was
-abandoned when `smax` is set too tightly.
-
-## Examples
-
-``` r
-align("ACGTACGT", "ACGTTCGT", smax = 8)
-#>   score resolved    cigar rescore_ok wellformed_ok
-#> 1     1     TRUE MMMMXMMM       TRUE          TRUE
-align(c("AAAACCC", "ACGT"), c("AAAATCC", "ACCT"), smax = 8)
-#>   score resolved   cigar rescore_ok wellformed_ok
-#> 1     1     TRUE MMMMXMM       TRUE          TRUE
-#> 2     1     TRUE    MMXM       TRUE          TRUE
-```
+See
+[`align_edit`](https://alrobles.github.io/genoaligner-r/reference/align_edit.md).
