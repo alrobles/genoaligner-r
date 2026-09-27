@@ -43,7 +43,7 @@ mutate <- function(s, k) {
 planted <- c(mutate(guide, 1), mutate(guide, 2), mutate(guide, 3), mutate(guide, 4))
 candidates[1:4] <- planted
 
-hits <- align(candidates, guide, smax = 4, with_cigar = TRUE)
+hits <- align_edit(candidates, guide, smax = 4, with_cigar = TRUE)
 table(hits$resolved)
 hits[hits$resolved, ]
 ```
@@ -95,7 +95,7 @@ reads <- vapply(truth, function(h) {
 centroids <- character(0); assign <- integer(length(reads))
 for (i in seq_along(reads)) {
     if (!length(centroids)) { centroids <- reads[i]; assign[i] <- 1; next }
-    d <- align(reads[i], centroids, smax = 4, with_cigar = FALSE)
+    d <- align_edit(reads[i], centroids, smax = 4, with_cigar = FALSE)
     hit <- which(d$resolved & d$score <= 4)[1]
     if (is.na(hit)) { centroids <- c(centroids, reads[i]); assign[i] <- length(centroids) }
     else assign[i] <- hit

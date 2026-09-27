@@ -1,0 +1,44 @@
+genoaligner — vendored CPU sources
+==================================
+
+The MSA engine and public-API layer in this package are verbatim copies of
+files in the sibling C++ repository (github.com/alrobles/genoaligner-devel),
+which is where the code is validated. Do not edit them here; upstream fixes
+land there and are re-vendored together with this manifest.
+
+  source repo : alrobles/genoaligner-devel
+  branch      : devin/msa-public-api
+  commit      : d0f9a2b338507896b739dbf2d8da6a99c29c21be
+  vendored on : 2026-09-25
+
+The .hip files under inst/include/genoaligner/backend/ are host-safe headers
+(kernel qualifiers degrade to no-ops without a HIP toolchain); the R package
+builds the HOST engine only. src/msa/msa_gpu.cpp, src/msa/nj_gpu.cpp and
+src/api/api_msa_gpu.cpp are deliberately NOT vendored (device code).
+
+  inst/include/genoaligner/api.hpp
+    f5673368a7347ba1e6d8214b97bef57a7b1e6487cff53b1bc53f43579836f691
+    <- include/genoaligner/api.hpp
+  inst/include/genoaligner/msa/msa.hpp
+    d2c92986f9d503412a90aa5a034c913dc17d32b9ceb46a52bff0e50c5f4b2f9f
+    <- include/genoaligner/msa/msa.hpp
+  inst/include/genoaligner/backend/codon_refine_kernel.hip
+    f4c72920dc8b51c41fd378508ecb0932d52504cc9861a1101fd1391ee9dba5cb
+    <- include/genoaligner/backend/codon_refine_kernel.hip
+  inst/include/genoaligner/backend/codon_refine_kernel_impl.hip
+    4ff885461ee1939e140a3732f48dea6c05545bccc7803b75ae094fadf566622f
+    <- include/genoaligner/backend/codon_refine_kernel_impl.hip
+  src/msa_ref.cpp
+    088e8817ec1b768a53274c241c0789ba2bd50ceb8c432fc6e509bcd592f42ef3
+    <- src/msa/msa_ref.cpp
+  src/api_msa.cpp
+    cd2de64706cef1127def656b0670b9cad2887ea3cb4ffee0994075aece09e783
+    <- src/api/api_msa.cpp
+  inst/include/api_msa_detail.hpp
+    62484572c8da518db90da5bd6c84d631d12388b041c485829dac97c2bda657be
+    <- src/api/api_msa_detail.hpp
+    (moved to inst/include/: headers inside src/ trigger an R CMD check
+    WARNING; api_msa.cpp's quoted include resolves it through -I../inst/include)
+
+Verify: sha256sum -c inst/VENDORED.txt is not usable (paths differ); re-hash
+each file and compare with the values above.

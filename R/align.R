@@ -1,8 +1,10 @@
 # genoaligner — public R API.
 #
 # Two entry points, exactly like the C++ library:
-#   align()    edit distance (Levenshtein / WFA-equivalent), bounded by smax
-#   align_sw() Smith-Waterman local alignment (affine gaps)
+#   align_edit()  edit distance (Levenshtein / WFA-equivalent), bounded by smax
+#   align_sw()    Smith-Waterman local alignment (affine gaps)
+# (align() remains as a deprecated alias of align_edit() — the generic name
+# collided with Biostrings/IRanges exports in mixed sessions.)
 # Both are VECTORISED over the pairs so they slot straight into a
 # data.frame/tibble pipeline. This is the "less spaghetti" contract:
 # a column of queries and a column of references in, a data.frame of
@@ -36,15 +38,15 @@
 #'   \code{!with_cigar}), \code{rescore_ok} and \code{wellformed_ok}
 #'   (validation flags computed in the library).
 #'
-#' CIGAR convention (identical for \code{align} and \code{align_sw}):
+#' CIGAR convention (identical for \code{align_edit} and \code{align_sw}):
 #' \code{M}/\code{X} consume a text and a pattern base; \code{I} consumes an
 #' extra \emph{text} base; \code{D} consumes an extra \emph{pattern} base.
 #'
 #' @examples
-#' align("ACGTACGT", "ACGTTCGT", smax = 8)
-#' align(c("AAAACCC", "ACGT"), c("AAAATCC", "ACCT"), smax = 8)
+#' align_edit("ACGTACGT", "ACGTTCGT", smax = 8)
+#' align_edit(c("AAAACCC", "ACGT"), c("AAAATCC", "ACCT"), smax = 8)
 #' @export
-align <- function(pattern, text, smax = 64, with_cigar = TRUE) {
+align_edit <- function(pattern, text, smax = 64, with_cigar = TRUE) {
     smax <- as.integer(smax)
     if (length(smax) != 1L || is.na(smax) || smax < 0L || smax > 511L)
         stop("smax must be a single integer in [0, 511].")
@@ -68,6 +70,22 @@ align <- function(pattern, text, smax = 64, with_cigar = TRUE) {
     }
     data.frame(score = score, resolved = resolved, cigar = cigar,
                rescore_ok = r_ok, wellformed_ok = w_ok)
+}
+
+#' Align pairs by edit distance (deprecated alias)
+#'
+#' \code{align()} is deprecated in favour of \code{\link{align_edit}()}: the
+#' generic name collides with \pkg{Biostrings}/\pkg{IRanges} exports in
+#' sessions that load both. It still works and returns identical results;
+#' new code should call \code{align_edit()}.
+#'
+#' @inheritParams align_edit
+#' @return See \code{\link{align_edit}}.
+#' @keywords internal
+#' @export
+align <- function(pattern, text, smax = 64, with_cigar = TRUE) {
+    .Deprecated("align_edit")
+    align_edit(pattern, text, smax = smax, with_cigar = with_cigar)
 }
 
 #' Smith-Waterman local alignment

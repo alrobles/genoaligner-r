@@ -44,7 +44,7 @@ From: rocker/r-ver:4.4.1
     apt-get install -y --no-install-recommends g++ make ca-certificates
     R -e 'install.packages("Rcpp", repos="https://cloud.r-project.org", quiet=TRUE)'
     R CMD INSTALL /opt/genoaligner_1.0.0.tar.gz
-    R -e 'library(genoaligner); stopifnot(align("ACGT","ACGT",smax=8)$score==0); cat("BUILD_CORE_OK\n")'
+    R -e 'library(genoaligner); stopifnot(align_edit("ACGT","ACGT",smax=8)$score==0); cat("BUILD_CORE_OK\n")'
 
 %runscript
     exec Rscript "$@"

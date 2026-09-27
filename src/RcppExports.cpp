@@ -41,10 +41,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// msa_run_cpp
+Rcpp::List msa_run_cpp(const std::vector<std::string>& seqs, const std::string& mode, int gc_def, int codon_refine, bool local_frame);
+RcppExport SEXP _genoaligner_msa_run_cpp(SEXP seqsSEXP, SEXP modeSEXP, SEXP gc_defSEXP, SEXP codon_refineSEXP, SEXP local_frameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< int >::type gc_def(gc_defSEXP);
+    Rcpp::traits::input_parameter< int >::type codon_refine(codon_refineSEXP);
+    Rcpp::traits::input_parameter< bool >::type local_frame(local_frameSEXP);
+    rcpp_result_gen = Rcpp::wrap(msa_run_cpp(seqs, mode, gc_def, codon_refine, local_frame));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_genoaligner_align_one", (DL_FUNC) &_genoaligner_align_one, 4},
     {"_genoaligner_align_sw_one", (DL_FUNC) &_genoaligner_align_sw_one, 7},
+    {"_genoaligner_msa_run_cpp", (DL_FUNC) &_genoaligner_msa_run_cpp, 5},
     {NULL, NULL, 0}
 };
 

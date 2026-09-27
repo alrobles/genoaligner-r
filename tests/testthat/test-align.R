@@ -1,5 +1,5 @@
 test_that("align: known edit distance + CIGAR", {
-    r <- align("ACGTACGT", "ACGTTCGT", smax = 8)
+    r <- align_edit("ACGTACGT", "ACGTTCGT", smax = 8)
     expect_equal(r$score, 1)
     expect_true(r$resolved)
     expect_equal(as.character(r$cigar), "MMMMXMMM")
@@ -8,21 +8,21 @@ test_that("align: known edit distance + CIGAR", {
 })
 
 test_that("align: exact match", {
-    r <- align("ACGT", "ACGT", smax = 8)
+    r <- align_edit("ACGT", "ACGT", smax = 8)
     expect_equal(r$score, 0)
     expect_true(r$resolved)
     expect_equal(as.character(r$cigar), "MMMM")
 })
 
 test_that("align: smax bound leaves a pair unresolved", {
-    r <- align("AAAAAAA", "TTTTTTT", smax = 2)   # distance 7 > 2
+    r <- align_edit("AAAAAAA", "TTTTTTT", smax = 2)   # distance 7 > 2
     expect_false(r$resolved)
     expect_true(is.na(r$score))
     expect_true(is.na(r$cigar))
 })
 
 test_that("align: batch + recycling + NA", {
-    r <- align(c("AAAACCC", "ACGT", NA), "AAAATCC", smax = 8)
+    r <- align_edit(c("AAAACCC", "ACGT", NA), "AAAATCC", smax = 8)
     expect_s3_class(r, "data.frame")
     expect_equal(nrow(r), 3L)
     expect_true(r$resolved[1])
@@ -33,14 +33,14 @@ test_that("align: batch + recycling + NA", {
 })
 
 test_that("align: with_cigar = FALSE omits cigar but keeps score", {
-    r <- align("ACGT", "ACCT", smax = 8, with_cigar = FALSE)
+    r <- align_edit("ACGT", "ACCT", smax = 8, with_cigar = FALSE)
     expect_equal(r$score, 1)
     expect_true(is.na(r$cigar))
 })
 
 test_that("align: smax outside [0,511] errors", {
-    expect_error(align("ACGT", "ACGT", smax = -1))
-    expect_error(align("ACGT", "ACGT", smax = 512))
+    expect_error(align_edit("ACGT", "ACGT", smax = -1))
+    expect_error(align_edit("ACGT", "ACGT", smax = 512))
 })
 
 test_that("align: oracle parity on random pairs", {
@@ -50,7 +50,7 @@ test_that("align: oracle parity on random pairs", {
         L <- sample(1:15, 1)
         a <- paste0(sample(alpha, L, replace = TRUE), collapse = "")
         b <- paste0(sample(alpha, L, replace = TRUE), collapse = "")
-        r <- align(a, b, smax = 30)
+        r <- align_edit(a, b, smax = 30)
         ed <- as.numeric(adist(a, b, costs = c(1, 1, 1)))
         expect_true(r$resolved)
         expect_equal(r$score, ed)
@@ -60,10 +60,10 @@ test_that("align: oracle parity on random pairs", {
 })
 
 test_that("align: empty inputs", {
-    r <- align("", "", smax = 8)
+    r <- align_edit("", "", smax = 8)
     expect_equal(r$score, 0)
     expect_true(r$resolved)
-    r2 <- align("ACGT", "", smax = 8)
+    r2 <- align_edit("ACGT", "", smax = 8)
     expect_equal(r2$score, 4)
     expect_true(r2$resolved)
 })
