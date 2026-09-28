@@ -100,6 +100,11 @@ align <- function(pattern, text, smax = 64, with_cigar = TRUE) {
 #' @param scoring Numeric vector of length 4, named or positional:
 #'   \code{(match, mismatch, gap_open, gap_extend)}. Recycled if a single
 #'   vector is given. The defaults are an example, not a recommendation.
+#'   Degenerate schemes are refused, matching the C++ API: \code{match <= 0},
+#'   \code{mismatch >= match}, \code{gap_open <= 0}, \code{gap_extend <= 0},
+#'   and \code{gap_extend > gap_open} when \code{with_cigar} (the emitted
+#'   CIGAR could not reproduce its own score under that regime; score-only
+#'   calls still accept it).
 #' @param with_cigar Logical; if \code{FALSE}, only score and end coordinates
 #'   are computed (start coordinates and \code{cigar} are \code{NA}/\code{-1}).
 #'
@@ -118,6 +123,22 @@ align_sw <- function(text, pattern, scoring = c(2L, -3L, 5L, 2L),
     if (length(scoring) != 4L)
         stop("scoring must be a vector of length 4: (match, mismatch, gap_open, gap_extend).")
     sc <- as.integer(scoring)
+    if (anyNA(sc))
+        stop("scoring must not contain NA.")
+    # Same refusal rules as the C++ API (api.hpp): degenerate schemes are a
+    # caller error, not something to compute under.
+    if (sc[1] <= 0L)
+        stop("scoring[1] match must be > 0 (match <= 0 scores 0 for every input).")
+    if (sc[2] >= sc[1])
+        stop("scoring[2] mismatch must be < match (mismatching must lose to matching).")
+    if (sc[3] <= 0L)
+        stop("scoring[3] gap_open must be > 0 (free or rewarded gaps are degenerate).")
+    if (sc[4] <= 0L)
+        stop("scoring[4] gap_extend must be > 0 (free or rewarded gaps are degenerate).")
+    if (isTRUE(with_cigar) && sc[4] > sc[3])
+        stop("scoring[4] gap_extend > gap_open is unsupported with with_cigar = TRUE: ",
+             "the emitted CIGAR cannot reproduce its own score. ",
+             "Use with_cigar = FALSE for score-only under this scheme.")
     stopifnot_character(text); stopifnot_character(pattern)
     n <- max(length(text), length(pattern))
     text <- recycle(text, n); pattern <- recycle(pattern, n)

@@ -13,7 +13,12 @@ align_sw(text, pattern, scoring = c(2L, -3L, 5L, 2L), with_cigar = TRUE)
 
 \item{scoring}{Numeric vector of length 4, named or positional:
 \code{(match, mismatch, gap_open, gap_extend)}. Recycled if a single
-vector is given. The defaults are an example, not a recommendation.}
+vector is given. The defaults are an example, not a recommendation.
+Degenerate schemes are refused, matching the C++ API: \code{match <= 0},
+\code{mismatch >= match}, \code{gap_open <= 0}, \code{gap_extend <= 0},
+and \code{gap_extend > gap_open} when \code{with_cigar} (the emitted
+CIGAR could not reproduce its own score under that regime; score-only
+calls still accept it).}
 
 \item{with_cigar}{Logical; if \code{FALSE}, only score and end coordinates
 are computed (start coordinates and \code{cigar} are \code{NA}/\code{-1}).}
