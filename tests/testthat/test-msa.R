@@ -97,6 +97,68 @@ test_that("msa_*: bad input is refused, never silently served", {
     expect_error(msa_align("ACGT", guide = "mafft"), "nj")
 })
 
+test_that("iter_refine: valid MSA, letters preserved, deterministic", {
+    s <- c("ACGTACGTACGTACGT", "ACGAACGTACGTTCGT", "ACGTTCGTACGAACGT",
+           "ACGTACGTTCGTACGT", "TCGTACGTACGTACGA", "ACGTACGTACGAACGA")
+    a0 <- msa_align(s)
+    a2 <- msa_align(s, iter_refine = 2)
+    expect_s3_class(a2, "genoaligner_msa")
+    expect_equal(nrow(a2$aligned), length(s))
+    # every row still spells its input sequence minus gaps
+    for (i in seq_along(s)) {
+        nts <- paste0(a2$aligned[i, ][a2$aligned[i, ] != "-"], collapse = "")
+        expect_equal(nts, s[i])
+    }
+    # deterministic
+    expect_identical(as.matrix(msa_align(s, iter_refine = 2)),
+                     as.matrix(a2))
+    # iter_refine = 0 keeps the progressive answer byte-identical
+    expect_identical(as.matrix(msa_align(s, iter_refine = 0)),
+                     as.matrix(a0))
+})
+
+test_that("iter_refine works in codon mode (token MSA is refined)", {
+    s <- c("ATGATAATCACC", "ATGATTATCACCTGA", "ATGATAATCACCTAA")
+    a <- msa_codon(s, gc = 2, iter_refine = 2)
+    expect_s3_class(a, "genoaligner_msa")
+    expect_equal(a$params$iter_refine, 2L)
+})
+
+test_that("fft_band: banded refine stays valid and deterministic", {
+    s <- c("ACGTACGTACGTACGT", "ACGAACGTACGTTCGT", "ACGTTCGTACGAACGT",
+           "ACGTACGTTCGTACGT", "TCGTACGTACGTACGA", "ACGTACGTACGAACGA")
+    a <- msa_align(s, iter_refine = 2, fft_band = 32L)
+    expect_s3_class(a, "genoaligner_msa")
+    for (i in seq_along(s)) {
+        nts <- paste0(a$aligned[i, ][a$aligned[i, ] != "-"], collapse = "")
+        expect_equal(nts, s[i])
+    }
+    expect_identical(as.matrix(msa_align(s, iter_refine = 2, fft_band = 32L)),
+                     as.matrix(a))
+})
+
+test_that("refine/fft arguments are refused at the R boundary", {
+    s <- c("ACGT", "ACGA", "ACGG")
+    expect_error(msa_align(s, iter_refine = -1), "iter_refine")
+    expect_error(msa_align(s, iter_refine = NA), "iter_refine")
+    expect_error(msa_align(s, fft_band = -2), "fft_band")
+    expect_error(msa_align(s, fft_lags = 0), "fft_lags")
+    expect_error(msa_align(s, fft_min_rel = -0.5), "fft_min_rel")
+    expect_error(msa_align(s, fft_min_rel = NA), "fft_min_rel")
+    # band without refinement is a nonsense request, refused (not guessed)
+    expect_error(msa_align(s, fft_band = 16), "iter_refine")
+    expect_error(msa_codon(s, fft_band = 16), "iter_refine")
+})
+
+test_that("params echo records the effective refine/fft request", {
+    a <- msa_align(c("ACGT", "ACGA", "ACGG"),
+                   iter_refine = 1, fft_band = 8)
+    expect_equal(a$params$iter_refine, 1L)
+    expect_equal(a$params$fft_band, 8L)
+    expect_equal(a$params$fft_lags, 4L)
+    expect_equal(a$params$fft_min_rel, 0.10)
+})
+
 test_that("msa S3 methods: print/as.matrix/as.character/as_dnabin", {
     a <- msa_align(c(x = "ACGTACGT", y = "ACGTTCGT"))
     expect_output(print(a), "genoaligner MSA: 2 sequences")

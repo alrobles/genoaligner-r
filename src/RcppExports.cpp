@@ -42,8 +42,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // msa_run_cpp
-Rcpp::List msa_run_cpp(const std::vector<std::string>& seqs, const std::string& mode, int gc_def, int codon_refine, bool local_frame);
-RcppExport SEXP _genoaligner_msa_run_cpp(SEXP seqsSEXP, SEXP modeSEXP, SEXP gc_defSEXP, SEXP codon_refineSEXP, SEXP local_frameSEXP) {
+Rcpp::List msa_run_cpp(const std::vector<std::string>& seqs, const std::string& mode, int gc_def, int codon_refine, bool local_frame, int iter_refine, int fft_band, int fft_lags, double fft_min_rel);
+RcppExport SEXP _genoaligner_msa_run_cpp(SEXP seqsSEXP, SEXP modeSEXP, SEXP gc_defSEXP, SEXP codon_refineSEXP, SEXP local_frameSEXP, SEXP iter_refineSEXP, SEXP fft_bandSEXP, SEXP fft_lagsSEXP, SEXP fft_min_relSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -52,7 +52,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type gc_def(gc_defSEXP);
     Rcpp::traits::input_parameter< int >::type codon_refine(codon_refineSEXP);
     Rcpp::traits::input_parameter< bool >::type local_frame(local_frameSEXP);
-    rcpp_result_gen = Rcpp::wrap(msa_run_cpp(seqs, mode, gc_def, codon_refine, local_frame));
+    Rcpp::traits::input_parameter< int >::type iter_refine(iter_refineSEXP);
+    Rcpp::traits::input_parameter< int >::type fft_band(fft_bandSEXP);
+    Rcpp::traits::input_parameter< int >::type fft_lags(fft_lagsSEXP);
+    Rcpp::traits::input_parameter< double >::type fft_min_rel(fft_min_relSEXP);
+    rcpp_result_gen = Rcpp::wrap(msa_run_cpp(seqs, mode, gc_def, codon_refine, local_frame, iter_refine, fft_band, fft_lags, fft_min_rel));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -60,7 +64,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_genoaligner_align_one", (DL_FUNC) &_genoaligner_align_one, 4},
     {"_genoaligner_align_sw_one", (DL_FUNC) &_genoaligner_align_sw_one, 7},
-    {"_genoaligner_msa_run_cpp", (DL_FUNC) &_genoaligner_msa_run_cpp, 5},
+    {"_genoaligner_msa_run_cpp", (DL_FUNC) &_genoaligner_msa_run_cpp, 9},
     {NULL, NULL, 0}
 };
 

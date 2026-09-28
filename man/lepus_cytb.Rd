@@ -41,6 +41,6 @@ to show that a near-zero local alignment score flags a mislabelled record.
 \examples{
 data(lepus_cytb)
 table(lepus_cytb$species)
-align(lepus_cytb$sequence[1:3], lepus_cytb$sequence[2], smax = 200)
+align_edit(lepus_cytb$sequence[1:3], lepus_cytb$sequence[2], smax = 200)
 }
 \keyword{datasets}

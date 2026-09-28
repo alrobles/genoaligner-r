@@ -27,6 +27,27 @@
 #' @param mode \code{"dna"} (default) or \code{"protein"}.
 #' @param guide Guide-tree construction; only \code{"nj"} (deterministic
 #'   neighbor joining) exists today.
+#' @param iter_refine Integer \eqn{\ge 0}; iterative-refinement rounds over
+#'   the guide-tree bipartitions (MAFFT \code{FFT-NS-i} class): every tree
+#'   edge splits the alignment into two induced sub-profiles, the pair is
+#'   realigned, and the candidate is kept only if the sum-of-pairs score
+#'   strictly improves. \code{0} (default) keeps the plain progressive
+#'   alignment. Two rounds is a good first value; the pass converges and a
+#'   further round reports no accepted changes.
+#' @param fft_band Integer \eqn{\ge 0}; FFT anchor band half-width in
+#'   columns. When \eqn{> 0} (and \code{iter_refine > 0}) the engine
+#'   detects homology anchors by Fourier cross-correlation of the two
+#'   profile property signals and runs the realignment DP inside a band
+#'   around them — the literal FFT of MAFFT \code{FFT-NS-i}. Weak anchor
+#'   evidence falls back to the full DP, and the strict-improvement gate
+#'   applies either way, so this is a speed/robustness knob, not a
+#'   quality risk. \code{0} (default) uses the full matrix.
+#' @param fft_lags Integer \eqn{\ge 1}; number of anchor diagonals whose
+#'   bands are unioned (default \code{4}). Only used when
+#'   \code{fft_band > 0}.
+#' @param fft_min_rel Numeric \eqn{\ge 0}; minimum cosine similarity of
+#'   the best anchor before the band is trusted (default \code{0.10}).
+#'   Higher values make the engine fall back to the full DP more often.
 #'
 #' @return An object of class \code{genoaligner_msa} with components
 #'   \code{aligned} (character matrix, one row per input sequence, one column
@@ -40,16 +61,20 @@
 #'           mode = "protein")
 #' @export
 msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
-                      guide = "nj") {
+                      guide = "nj", iter_refine = 0L, fft_band = 0L,
+                      fft_lags = 4L, fft_min_rel = 0.10) {
     mode <- match.arg(mode)
     if (!identical(guide, "nj"))
         stop("only guide = \"nj\" is supported.")
+    fft <- check_fft_args(iter_refine, fft_band, fft_lags, fft_min_rel)
     seqs <- check_msa_seqs(seqs)
     names <- check_msa_names(names, seqs)
     o <- msa_run_cpp(unname(seqs), mode, gc_def = 1L,
-                     codon_refine = 0L, local_frame = FALSE)
+                     codon_refine = 0L, local_frame = FALSE,
+                     iter_refine = fft$iter, fft_band = fft$band,
+                     fft_lags = fft$lags, fft_min_rel = fft$min_rel)
     new_msa_result(o, seqs, names,
-                   params = list(mode = mode, guide = guide))
+                   params = c(list(mode = mode, guide = guide), fft$params))
 }
 
 #' Codon-aware multiple sequence alignment
@@ -81,18 +106,24 @@ msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
 #' msa_codon(c("ATGATAATCACC", "ATGATTATCACCTGA"))
 #' msa_codon(c("ATGATAATCACC", "ATGATTATCACCTGA"), gc = 2)
 #' @export
-msa_codon <- function(seqs, names = NULL, gc = 1L, refine = FALSE) {
+msa_codon <- function(seqs, names = NULL, gc = 1L, refine = FALSE,
+                      iter_refine = 0L, fft_band = 0L,
+                      fft_lags = 4L, fft_min_rel = 0.10) {
     gc <- as.integer(gc)
     if (length(gc) != 1L || is.na(gc) || !gc %in% c(1L, 2L))
         stop("gc must be a single integer: 1 (standard) or 2 (vertebrate mitochondrial).")
     refine <- isTRUE(refine)
+    fft <- check_fft_args(iter_refine, fft_band, fft_lags, fft_min_rel)
     seqs <- check_msa_seqs(seqs)
     names <- check_msa_names(names, seqs)
     o <- msa_run_cpp(unname(seqs), "codon", gc_def = gc,
                      codon_refine = if (refine) 1L else 0L,
-                     local_frame = refine)
+                     local_frame = refine,
+                     iter_refine = fft$iter, fft_band = fft$band,
+                     fft_lags = fft$lags, fft_min_rel = fft$min_rel)
     new_msa_result(o, seqs, names,
-                   params = list(mode = "codon", gc = gc, refine = refine))
+                   params = c(list(mode = "codon", gc = gc,
+                                   refine = refine), fft$params))
 }
 
 #' Coerce a genoaligner_msa alignment to ape::DNAbin
@@ -159,6 +190,30 @@ check_msa_seqs <- function(seqs) {
     if (anyNA(seqs))
         stop("seqs must not contain NA.")
     seqs
+}
+
+# Refine/FFT request validation at the R boundary — same refusal rules
+# as the C++ request gate (the library validates again; this layer keeps
+# the error phrasing R-idiomatic).
+check_fft_args <- function(iter_refine, fft_band, fft_lags, fft_min_rel) {
+    iter <- suppressWarnings(as.integer(iter_refine))
+    band <- suppressWarnings(as.integer(fft_band))
+    lags <- suppressWarnings(as.integer(fft_lags))
+    mr   <- suppressWarnings(as.numeric(fft_min_rel))
+    if (length(iter) != 1L || is.na(iter) || iter < 0L)
+        stop("iter_refine must be a single integer >= 0.")
+    if (length(band) != 1L || is.na(band) || band < 0L)
+        stop("fft_band must be a single integer >= 0.")
+    if (length(lags) != 1L || is.na(lags) || lags < 1L)
+        stop("fft_lags must be a single integer >= 1.")
+    if (length(mr) != 1L || !is.finite(mr) || mr < 0)
+        stop("fft_min_rel must be a single finite number >= 0.")
+    if (band > 0L && iter < 1L)
+        stop("fft_band only applies during iterative refinement: ",
+             "set iter_refine >= 1 (or fft_band = 0).")
+    list(iter = iter, band = band, lags = lags, min_rel = mr,
+         params = list(iter_refine = iter, fft_band = band,
+                       fft_lags = lags, fft_min_rel = mr))
 }
 
 check_msa_names <- function(names, seqs) {

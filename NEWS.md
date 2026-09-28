@@ -15,6 +15,16 @@
   matrix, `$qc` per-sequence QC — frame / stop codons / partial codons in
   codon mode —, `$params`), with `print`/`as.matrix`/`as.character` methods
   and optional `ape::DNAbin` coercion via `as_dnabin()`.
+* `msa_align()`/`msa_codon()` gain iterative refinement and FFT anchors
+  (MAFFT `FFT-NS-i` class): `iter_refine = k` realigns the two induced
+  profiles of every guide-tree edge and keeps a candidate only when the
+  sum-of-pairs score strictly improves; `fft_band > 0` restricts each
+  realignment DP to a band around Fourier-detected homology anchors
+  (faster, exact-rescored, falls back to the full DP on weak signal).
+  On 37 real Lepus cytb sequences two rounds improve the SP objective
+  620,764 → 628,384 at ~30% less refinement time with `fft_band = 32`.
+* Re-vendored engine: genoaligner-devel `devin/msa-iter-refine` @ 2b15a7a
+  (PR #13) — see inst/VENDORED.txt.
 
 # genoaligner 1.0.0.9000
 

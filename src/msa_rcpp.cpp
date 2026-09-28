@@ -11,13 +11,19 @@
 // [[Rcpp::export]]
 Rcpp::List msa_run_cpp(const std::vector<std::string>& seqs,
                        const std::string& mode, int gc_def,
-                       int codon_refine, bool local_frame)
+                       int codon_refine, bool local_frame,
+                       int iter_refine, int fft_band, int fft_lags,
+                       double fft_min_rel)
 {
     genoaligner::MsaRequest req;
     req.seqs             = seqs;
     req.gc_def           = gc_def;
     req.codon_refine     = codon_refine;
     req.codon_local_frame = local_frame;
+    req.iter_refine      = iter_refine;
+    req.fft_band         = fft_band;
+    req.fft_lags         = fft_lags;
+    req.fft_min_rel      = (float)fft_min_rel;
     if      (mode == "dna")     req.mode = genoaligner::MsaMode::dna;
     else if (mode == "protein") req.mode = genoaligner::MsaMode::protein;
     else if (mode == "codon")   req.mode = genoaligner::MsaMode::codon;
