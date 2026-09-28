@@ -62,7 +62,16 @@ stays a multiple of 3 and the reading frame is preserved by construction.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">msa_codon</span><span class="op">(</span><span class="va">seqs</span>, names <span class="op">=</span> <span class="cn">NULL</span>, gc <span class="op">=</span> <span class="fl">1L</span>, refine <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">msa_codon</span><span class="op">(</span></span>
+<span>  <span class="va">seqs</span>,</span>
+<span>  names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  gc <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  refine <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  iter_refine <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  fft_band <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  fft_lags <span class="op">=</span> <span class="fl">4L</span>,</span>
+<span>  fft_min_rel <span class="op">=</span> <span class="fl">0.1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -88,6 +97,39 @@ row names of the aligned matrix and FASTA output.</p></dd>
 
 <dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
 <dd><p>Logical; run the stage-2 frameshift refinement pass.</p></dd>
+
+
+<dt id="arg-iter-refine">iter_refine<a class="anchor" aria-label="anchor" href="#arg-iter-refine"></a></dt>
+<dd><p>Integer \(\ge 0\); iterative-refinement rounds over
+the guide-tree bipartitions (MAFFT <code>FFT-NS-i</code> class): every tree
+edge splits the alignment into two induced sub-profiles, the pair is
+realigned, and the candidate is kept only if the sum-of-pairs score
+strictly improves. <code>0</code> (default) keeps the plain progressive
+alignment. Two rounds is a good first value; the pass converges and a
+further round reports no accepted changes.</p></dd>
+
+
+<dt id="arg-fft-band">fft_band<a class="anchor" aria-label="anchor" href="#arg-fft-band"></a></dt>
+<dd><p>Integer \(\ge 0\); FFT anchor band half-width in
+columns. When \(&gt; 0\) (and <code>iter_refine &gt; 0</code>) the engine
+detects homology anchors by Fourier cross-correlation of the two
+profile property signals and runs the realignment DP inside a band
+around them — the literal FFT of MAFFT <code>FFT-NS-i</code>. Weak anchor
+evidence falls back to the full DP, and the strict-improvement gate
+applies either way, so this is a speed/robustness knob, not a
+quality risk. <code>0</code> (default) uses the full matrix.</p></dd>
+
+
+<dt id="arg-fft-lags">fft_lags<a class="anchor" aria-label="anchor" href="#arg-fft-lags"></a></dt>
+<dd><p>Integer \(\ge 1\); number of anchor diagonals whose
+bands are unioned (default <code>4</code>). Only used when
+<code>fft_band &gt; 0</code>.</p></dd>
+
+
+<dt id="arg-fft-min-rel">fft_min_rel<a class="anchor" aria-label="anchor" href="#arg-fft-min-rel"></a></dt>
+<dd><p>Numeric \(\ge 0\); minimum cosine similarity of
+the best anchor before the band is trusted (default <code>0.10</code>).
+Higher values make the engine fall back to the full DP more often.</p></dd>
 
 </dl></div>
     <div class="section level2">

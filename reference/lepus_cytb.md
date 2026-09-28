@@ -56,10 +56,7 @@ table(lepus_cytb$species)
 #> 
 #>   cuniculus   europaeus granatensis     timidus 
 #>           8           8          13           8 
-align(lepus_cytb$sequence[1:3], lepus_cytb$sequence[2], smax = 200)
-#> Warning: 'align' is deprecated.
-#> Use 'align_edit' instead.
-#> See help("Deprecated")
+align_edit(lepus_cytb$sequence[1:3], lepus_cytb$sequence[2], smax = 200)
 #>   score resolved
 #> 1    89     TRUE
 #> 2     0     TRUE

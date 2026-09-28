@@ -51,6 +51,9 @@
 <code>msa_codon(seqs, gc = 1 | 2, refine = FALSE)</code> — MACSE-class codon-aware MSA: whole-codon indels preserve the reading frame; <code>refine = TRUE</code> runs a frameshift-refinement pass producing a nucleotide MSA.</li>
 </ul></li>
 <li>Both return S3 objects of class <code>genoaligner_msa</code> (<code>$aligned</code> character matrix, <code>$qc</code> per-sequence QC — frame / stop codons / partial codons in codon mode —, <code>$params</code>), with <code>print</code>/<code>as.matrix</code>/<code>as.character</code> methods and optional <code><a href="https://rdrr.io/pkg/ape/man/DNAbin.html" class="external-link">ape::DNAbin</a></code> coercion via <code><a href="../reference/as_dnabin.html">as_dnabin()</a></code>.</li>
+<li>
+<code><a href="../reference/msa_align.html">msa_align()</a></code>/<code><a href="../reference/msa_codon.html">msa_codon()</a></code> gain iterative refinement and FFT anchors (MAFFT <code>FFT-NS-i</code> class): <code>iter_refine = k</code> realigns the two induced profiles of every guide-tree edge and keeps a candidate only when the sum-of-pairs score strictly improves; <code>fft_band &gt; 0</code> restricts each realignment DP to a band around Fourier-detected homology anchors (faster, exact-rescored, falls back to the full DP on weak signal). On 37 real Lepus cytb sequences two rounds improve the SP objective 620,764 → 628,384 at ~30% less refinement time with <code>fft_band = 32</code>.</li>
+<li>Re-vendored engine: genoaligner-devel <code>devin/msa-iter-refine</code> @ 2b15a7a (PR <a href="https://github.com/alrobles/genoaligner-r/issues/13" class="external-link">#13</a>) — see inst/VENDORED.txt.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0.9000" id="genoaligner-1009000">genoaligner 1.0.0.9000<a class="anchor" aria-label="anchor" href="#genoaligner-1009000"></a></h2>
