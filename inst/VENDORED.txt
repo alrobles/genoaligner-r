@@ -7,9 +7,9 @@ which is where the code is validated. Do not edit them here; upstream fixes
 land there and are re-vendored together with this manifest.
 
   source repo : alrobles/genoaligner-devel
-  branch      : devin/msa-public-api
-  commit      : d0f9a2b338507896b739dbf2d8da6a99c29c21be
-  vendored on : 2026-09-25
+  branch      : devin/codon-msa (merged via PR #12)
+  commit      : 3869839822ee2366237c76e1d84ae2b82db36c70
+  vendored on : 2026-09-25; re-verified byte-identical 2026-09-28
 
 The .hip files under inst/include/genoaligner/backend/ are host-safe headers
 (kernel qualifiers degrade to no-ops without a HIP toolchain); the R package
