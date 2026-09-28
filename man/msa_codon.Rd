@@ -4,7 +4,16 @@
 \alias{msa_codon}
 \title{Codon-aware multiple sequence alignment}
 \usage{
-msa_codon(seqs, names = NULL, gc = 1L, refine = FALSE)
+msa_codon(
+  seqs,
+  names = NULL,
+  gc = 1L,
+  refine = FALSE,
+  iter_refine = 0L,
+  fft_band = 0L,
+  fft_lags = 4L,
+  fft_min_rel = 0.1
+)
 }
 \arguments{
 \item{seqs}{Character vector; unaligned sequences (no \code{"-"}).
@@ -19,6 +28,31 @@ row names of the aligned matrix and FASTA output.}
 \code{2L} (vertebrate mitochondrial — the right table for CYTB/COI/ND).}
 
 \item{refine}{Logical; run the stage-2 frameshift refinement pass.}
+
+\item{iter_refine}{Integer \eqn{\ge 0}; iterative-refinement rounds over
+the guide-tree bipartitions (MAFFT \code{FFT-NS-i} class): every tree
+edge splits the alignment into two induced sub-profiles, the pair is
+realigned, and the candidate is kept only if the sum-of-pairs score
+strictly improves. \code{0} (default) keeps the plain progressive
+alignment. Two rounds is a good first value; the pass converges and a
+further round reports no accepted changes.}
+
+\item{fft_band}{Integer \eqn{\ge 0}; FFT anchor band half-width in
+columns. When \eqn{> 0} (and \code{iter_refine > 0}) the engine
+detects homology anchors by Fourier cross-correlation of the two
+profile property signals and runs the realignment DP inside a band
+around them — the literal FFT of MAFFT \code{FFT-NS-i}. Weak anchor
+evidence falls back to the full DP, and the strict-improvement gate
+applies either way, so this is a speed/robustness knob, not a
+quality risk. \code{0} (default) uses the full matrix.}
+
+\item{fft_lags}{Integer \eqn{\ge 1}; number of anchor diagonals whose
+bands are unioned (default \code{4}). Only used when
+\code{fft_band > 0}.}
+
+\item{fft_min_rel}{Numeric \eqn{\ge 0}; minimum cosine similarity of
+the best anchor before the band is trusted (default \code{0.10}).
+Higher values make the engine fall back to the full DP more often.}
 }
 \value{
 A \code{genoaligner_msa} object. In codon mode \code{qc} carries

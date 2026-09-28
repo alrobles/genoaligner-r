@@ -7,9 +7,10 @@ which is where the code is validated. Do not edit them here; upstream fixes
 land there and are re-vendored together with this manifest.
 
   source repo : alrobles/genoaligner-devel
-  branch      : devin/codon-msa (merged via PR #12)
-  commit      : 3869839822ee2366237c76e1d84ae2b82db36c70
-  vendored on : 2026-09-25; re-verified byte-identical 2026-09-28
+  branch      : devin/msa-iter-refine (PR #13; builds on codon-msa)
+  commit      : 2b15a7a19abc6e8bc2d5b1a2beb751c7b375819c
+  vendored on : 2026-09-25; re-verified byte-identical 2026-09-28;
+                iterative refinement + FFT anchors vendored 2026-09-28
 
 The .hip files under inst/include/genoaligner/backend/ are host-safe headers
 (kernel qualifiers degrade to no-ops without a HIP toolchain); the R package
@@ -17,10 +18,10 @@ builds the HOST engine only. src/msa/msa_gpu.cpp, src/msa/nj_gpu.cpp and
 src/api/api_msa_gpu.cpp are deliberately NOT vendored (device code).
 
   inst/include/genoaligner/api.hpp
-    f5673368a7347ba1e6d8214b97bef57a7b1e6487cff53b1bc53f43579836f691
+    28336704b3b6bf940339c87dab77e8fac2febcea7bd38ebcfd96544da1da4546
     <- include/genoaligner/api.hpp
   inst/include/genoaligner/msa/msa.hpp
-    d2c92986f9d503412a90aa5a034c913dc17d32b9ceb46a52bff0e50c5f4b2f9f
+    c6e0d90cb50eb8a2e2d99a2a7379dedacda63dcdfb861ace7f52a0dde565b48d
     <- include/genoaligner/msa/msa.hpp
   inst/include/genoaligner/backend/codon_refine_kernel.hip
     f4c72920dc8b51c41fd378508ecb0932d52504cc9861a1101fd1391ee9dba5cb
@@ -29,13 +30,13 @@ src/api/api_msa_gpu.cpp are deliberately NOT vendored (device code).
     4ff885461ee1939e140a3732f48dea6c05545bccc7803b75ae094fadf566622f
     <- include/genoaligner/backend/codon_refine_kernel_impl.hip
   src/msa_ref.cpp
-    088e8817ec1b768a53274c241c0789ba2bd50ceb8c432fc6e509bcd592f42ef3
+    8f8bc72f67ea7b0ab274ff89d4909bf0f0cbce5c349cdc3ed89358aabccf1a65
     <- src/msa/msa_ref.cpp
   src/api_msa.cpp
     cd2de64706cef1127def656b0670b9cad2887ea3cb4ffee0994075aece09e783
     <- src/api/api_msa.cpp
   inst/include/api_msa_detail.hpp
-    62484572c8da518db90da5bd6c84d631d12388b041c485829dac97c2bda657be
+    d9c5f4aef0c76243a3bc717be833577f92c3bf5f78cb0ad0be1f72338d188b37
     <- src/api/api_msa_detail.hpp
     (moved to inst/include/: headers inside src/ trigger an R CMD check
     WARNING; api_msa.cpp's quoted include resolves it through -I../inst/include)

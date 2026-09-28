@@ -9,7 +9,7 @@ align_sw_one <- function(text, pattern, match, mismatch, gap_open, gap_extend, w
     .Call(`_genoaligner_align_sw_one`, text, pattern, match, mismatch, gap_open, gap_extend, with_cigar)
 }
 
-msa_run_cpp <- function(seqs, mode, gc_def, codon_refine, local_frame) {
-    .Call(`_genoaligner_msa_run_cpp`, seqs, mode, gc_def, codon_refine, local_frame)
+msa_run_cpp <- function(seqs, mode, gc_def, codon_refine, local_frame, iter_refine, fft_band, fft_lags, fft_min_rel) {
+    .Call(`_genoaligner_msa_run_cpp`, seqs, mode, gc_def, codon_refine, local_frame, iter_refine, fft_band, fft_lags, fft_min_rel)
 }
 
