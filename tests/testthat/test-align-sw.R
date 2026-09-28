@@ -41,6 +41,21 @@ test_that("align_sw: scoring must length 4", {
     expect_error(align_sw("ACGT", "ACGT", scoring = c(2, -3)))
 })
 
+test_that("align_sw: degenerate schemes refused like the C++ API", {
+    expect_error(align_sw("ACGT", "ACGT", c(0, -3, 5, 2)),   "match must be > 0")
+    expect_error(align_sw("ACGT", "ACGT", c(-1, -3, 5, 2)),  "match must be > 0")
+    expect_error(align_sw("ACGT", "ACGT", c(2, 2, 5, 2)),    "mismatch must be < match")
+    expect_error(align_sw("ACGT", "ACGT", c(2, -3, 0, 2)),   "gap_open must be > 0")
+    expect_error(align_sw("ACGT", "ACGT", c(2, -3, -1, 2)),  "gap_open must be > 0")
+    expect_error(align_sw("ACGT", "ACGT", c(2, -3, 5, 0)),   "gap_extend must be > 0")
+    expect_error(align_sw("ACGT", "ACGT", c(2, -3, NA, 2)),  "NA")
+    # gap_extend > gap_open: refused with cigar, allowed score-only
+    expect_error(align_sw("ACGT", "ACGT", c(2, -3, 2, 5)), "gap_extend > gap_open")
+    r <- align_sw("ACGTACGT", "ACGTTCGT", c(2, -3, 2, 5), with_cigar = FALSE)
+    expect_true(is.na(r$cigar))
+    expect_true(!is.na(r$score))
+})
+
 test_that("align_sw: self-check rescore/wellformed on random pairs", {
     set.seed(42)
     alpha <- c("A", "C", "G", "T")
