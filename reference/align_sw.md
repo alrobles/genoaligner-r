@@ -26,6 +26,11 @@ align_sw(text, pattern, scoring = c(2L, -3L, 5L, 2L), with_cigar = TRUE)
   Numeric vector of length 4, named or positional:
   `(match, mismatch, gap_open, gap_extend)`. Recycled if a single vector
   is given. The defaults are an example, not a recommendation.
+  Degenerate schemes are refused, matching the C++ API: `match <= 0`,
+  `mismatch >= match`, `gap_open <= 0`, `gap_extend <= 0`, and
+  `gap_extend > gap_open` when `with_cigar` (the emitted CIGAR could not
+  reproduce its own score under that regime; score-only calls still
+  accept it).
 
 - with_cigar:
 

@@ -74,7 +74,12 @@ coordinates are <code>-1</code> and <code>cigar</code> is empty.</p>
 <dt id="arg-scoring">scoring<a class="anchor" aria-label="anchor" href="#arg-scoring"></a></dt>
 <dd><p>Numeric vector of length 4, named or positional:
 <code>(match, mismatch, gap_open, gap_extend)</code>. Recycled if a single
-vector is given. The defaults are an example, not a recommendation.</p></dd>
+vector is given. The defaults are an example, not a recommendation.
+Degenerate schemes are refused, matching the C++ API: <code>match &lt;= 0</code>,
+<code>mismatch &gt;= match</code>, <code>gap_open &lt;= 0</code>, <code>gap_extend &lt;= 0</code>,
+and <code>gap_extend &gt; gap_open</code> when <code>with_cigar</code> (the emitted
+CIGAR could not reproduce its own score under that regime; score-only
+calls still accept it).</p></dd>
 
 
 <dt id="arg-with-cigar">with_cigar<a class="anchor" aria-label="anchor" href="#arg-with-cigar"></a></dt>
