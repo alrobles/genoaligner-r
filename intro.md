@@ -1,12 +1,18 @@
 # NA
 
-`genoaligner` aligns pairs of sequences. It is a **pairwise** aligner:
-it compares two sequences you already have, it does not build a multiple
-alignment and it does not recruit candidates.
+`genoaligner` aligns sequences: **pairs** of them with
+[`align_edit()`](https://alrobles.github.io/genoaligner-r/reference/align_edit.md)
+and
+[`align_sw()`](https://alrobles.github.io/genoaligner-r/reference/align_sw.md),
+and **sets** of them with
+[`msa_align()`](https://alrobles.github.io/genoaligner-r/reference/msa_align.md)
+and
+[`msa_codon()`](https://alrobles.github.io/genoaligner-r/reference/msa_codon.md).
+This vignette covers the two standard pairwise problems; for multiple
+alignment see
+[`vignette("msa-codon-lepus")`](https://alrobles.github.io/genoaligner-r/articles/msa-codon-lepus.md).
 
-Two entry points cover the two standard pairwise problems:
-
-- [`align()`](https://alrobles.github.io/genoaligner-r/reference/align.md)
+- [`align_edit()`](https://alrobles.github.io/genoaligner-r/reference/align_edit.md)
   — **edit distance** (Levenshtein; the WFA-equivalent score) with an
   optional CIGAR.
 - [`align_sw()`](https://alrobles.github.io/genoaligner-r/reference/align_sw.md)
@@ -17,7 +23,7 @@ Two entry points cover the two standard pairwise problems:
 
 ``` r
 
-align("ACGTACGT", "ACGTTCGT", smax = 8)
+align_edit("ACGTACGT", "ACGTTCGT", smax = 8)
 #>   score resolved    cigar rescore_ok wellformed_ok
 #> 1     1     TRUE MMMMXMMM       TRUE          TRUE
 ```
@@ -36,7 +42,7 @@ pairs <- data.frame(
   query     = c("ACGTACGT", "GGGG",    "TTTTCCCC", "AAAACCCC"),
   reference = c("ACGTTCGT", "ACGT",    "TTTTCGCG", "AAAATTTT")
 )
-pairs$result <- align(pairs$query, pairs$reference, smax = 8)
+pairs$result <- align_edit(pairs$query, pairs$reference, smax = 8)
 pairs
 #>      query reference result.score result.resolved result.cigar
 #> 1 ACGTACGT  ACGTTCGT            1            TRUE     MMMMXMMM

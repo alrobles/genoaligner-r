@@ -34,16 +34,15 @@
     </div>
 
 
-<p><code>genoaligner</code> aligns pairs of sequences. It is a <strong>pairwise</strong> aligner: it compares two sequences you already have, it does not build a multiple alignment and it does not recruit candidates.</p>
-<p>Two entry points cover the two standard pairwise problems:</p>
+<p><code>genoaligner</code> aligns sequences: <strong>pairs</strong> of them with <code><a href="reference/align_edit.html">align_edit()</a></code> and <code><a href="reference/align_sw.html">align_sw()</a></code>, and <strong>sets</strong> of them with <code><a href="reference/msa_align.html">msa_align()</a></code> and <code><a href="reference/msa_codon.html">msa_codon()</a></code>. This vignette covers the two standard pairwise problems; for multiple alignment see <code><a href="articles/msa-codon-lepus.html">vignette("msa-codon-lepus")</a></code>.</p>
 <ul><li>
-<code><a href="reference/align.html">align()</a></code> — <strong>edit distance</strong> (Levenshtein; the WFA-equivalent score) with an optional CIGAR.</li>
+<code><a href="reference/align_edit.html">align_edit()</a></code> — <strong>edit distance</strong> (Levenshtein; the WFA-equivalent score) with an optional CIGAR.</li>
 <li>
 <code><a href="reference/align_sw.html">align_sw()</a></code> — <strong>Smith-Waterman</strong> local alignment with affine gaps, CIGAR, and the aligned span’s coordinates.</li>
 </ul><div class="section level2">
 <h2 id="edit-distance">Edit distance<a class="anchor" aria-label="anchor" href="#edit-distance"></a></h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/align.html">align</a></span><span class="op">(</span><span class="st">"ACGTACGT"</span>, <span class="st">"ACGTTCGT"</span>, smax <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/align_edit.html">align_edit</a></span><span class="op">(</span><span class="st">"ACGTACGT"</span>, <span class="st">"ACGTTCGT"</span>, smax <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   score resolved    cigar rescore_ok wellformed_ok</span></span>
 <span><span class="co">#&gt; 1     1     TRUE MMMMXMMM       TRUE          TRUE</span></span></code></pre></div>
 <p>By default <code>smax = 64</code>: a pair is <em>resolved</em> only when its true equal-cost edit distance is at most <code>smax</code>. If it exceeds the bound the pair comes back <code>resolved = FALSE</code> with an <code>NA</code> score rather than a wrong number — size <code>smax</code> to your data to avoid silently under-serving.</p>
@@ -53,7 +52,7 @@
 <span>  query     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ACGTACGT"</span>, <span class="st">"GGGG"</span>,    <span class="st">"TTTTCCCC"</span>, <span class="st">"AAAACCCC"</span><span class="op">)</span>,</span>
 <span>  reference <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ACGTTCGT"</span>, <span class="st">"ACGT"</span>,    <span class="st">"TTTTCGCG"</span>, <span class="st">"AAAATTTT"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">pairs</span><span class="op">$</span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/align.html">align</a></span><span class="op">(</span><span class="va">pairs</span><span class="op">$</span><span class="va">query</span>, <span class="va">pairs</span><span class="op">$</span><span class="va">reference</span>, smax <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
+<span><span class="va">pairs</span><span class="op">$</span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/align_edit.html">align_edit</a></span><span class="op">(</span><span class="va">pairs</span><span class="op">$</span><span class="va">query</span>, <span class="va">pairs</span><span class="op">$</span><span class="va">reference</span>, smax <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="va">pairs</span></span>
 <span><span class="co">#&gt;      query reference result.score result.resolved result.cigar</span></span>
 <span><span class="co">#&gt; 1 ACGTACGT  ACGTTCGT            1            TRUE     MMMMXMMM</span></span>
