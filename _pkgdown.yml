@@ -1,3 +1,31 @@
 url: https://alrobles.github.io/genoaligner-r/
 template:
   bootstrap: 5
+
+reference:
+  - title: Package
+    contents:
+      - genoaligner-package
+  - title: Pairwise alignment
+    contents:
+      - align_edit
+      - align_sw
+  - title: Multiple sequence alignment
+    contents:
+      - msa_align
+      - msa_codon
+      - as_dnabin
+  - title: Data
+    contents:
+      - lepus_cytb
+
+articles:
+  - title: Getting started
+    contents:
+      - intro
+      - simulated-use-cases
+  - title: Case studies
+    contents:
+      - lepus-cytb
+      - msa-codon-lepus
+      - apptainer

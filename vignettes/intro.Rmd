@@ -12,11 +12,10 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6)
 library(genoaligner)
 ```
 
-`genoaligner` aligns pairs of sequences. It is a **pairwise** aligner: it
-compares two sequences you already have, it does not build a multiple alignment
-and it does not recruit candidates.
-
-Two entry points cover the two standard pairwise problems:
+`genoaligner` aligns sequences: **pairs** of them with `align_edit()` and
+`align_sw()`, and **sets** of them with `msa_align()` and `msa_codon()`. This
+vignette covers the two standard pairwise problems; for multiple alignment see
+`vignette("msa-codon-lepus")`.
 
 * `align_edit()` — **edit distance** (Levenshtein; the WFA-equivalent score) with an
   optional CIGAR.
