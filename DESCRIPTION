@@ -1,7 +1,7 @@
 Package: genoaligner
 Type: Package
 Title: GPU-Portable Pairwise and Codon-Aware Multiple Sequence Alignment
-Version: 2.0.0.9000
+Version: 2.0.0
 Authors@R:
     person("Angel", "Robles-Fernandez", role = c("aut", "cre"),
            email = "a.l.robles.fernandez@gmail.com")

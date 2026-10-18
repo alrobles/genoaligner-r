@@ -1,4 +1,4 @@
-# genoaligner 2.0.0.9000 (development)
+# genoaligner 2.0.0
 
 * **Breaking**: `align()` renamed to `align_edit()` — the generic name
   collides with `Biostrings`/`IRanges` exports in mixed sessions. `align()`
