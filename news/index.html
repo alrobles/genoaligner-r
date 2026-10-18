@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">genoaligner</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="2.0.0.9000" id="genoaligner-2009000-development">genoaligner 2.0.0.9000 (development)<a class="anchor" aria-label="anchor" href="#genoaligner-2009000-development"></a></h2>
+<h2 class="pkg-version" data-toc-text="2.0.0" id="genoaligner-200">genoaligner 2.0.0<a class="anchor" aria-label="anchor" href="#genoaligner-200"></a></h2>
 <ul><li>
 <strong>Breaking</strong>: <code><a href="../reference/align.html">align()</a></code> renamed to <code><a href="../reference/align_edit.html">align_edit()</a></code> — the generic name collides with <code>Biostrings</code>/<code>IRanges</code> exports in mixed sessions. <code><a href="../reference/align.html">align()</a></code> remains as a deprecated alias returning identical results.</li>
 <li>New multiple-sequence-alignment API over the same portable C++17 core (vendored host engine, verified bit-exact against the GPU driver in the sibling C++ repository):

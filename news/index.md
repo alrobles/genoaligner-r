@@ -1,6 +1,6 @@
 # Changelog
 
-## genoaligner 2.0.0.9000 (development)
+## genoaligner 2.0.0
 
 - **Breaking**:
   [`align()`](https://alrobles.github.io/genoaligner-r/reference/align.md)
