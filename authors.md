@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/alrobles/genoaligner-r/blob/v2.0.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/alrobles/genoaligner-r/blob/main/DESCRIPTION)
 
 Robles-Fernandez A (2026). *genoaligner: GPU-Portable Pairwise and
 Codon-Aware Multiple Sequence Alignment*. R package version 2.0.0,
