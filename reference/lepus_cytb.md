@@ -3,7 +3,7 @@
 Real mitochondrial cytochrome b (cytb) records downloaded from NCBI
 nuccore for three hare species (*Lepus granatensis*, *L. timidus*, *L.
 europaeus*) — all flagged as population-genetic candidates in the
-EcoSeek genominer database (<https://genominer.ecoseek.org>) — plus the
+EcoSeek genominer database (<https://genoseek.ecoseek.org/>) — plus the
 European rabbit (*Oryctolagus cuniculus*) as an outgroup.
 
 ## Usage

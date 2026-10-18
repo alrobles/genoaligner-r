@@ -5,7 +5,7 @@ equal-length strings. Records differ in length and in which part of the
 gene they cover, and a few are not the gene you searched for at all.
 This case study takes real cytochrome b (cytb) records for three hare
 species — *Lepus granatensis*, *L. timidus* and *L. europaeus*, all of
-which the [EcoSeek genominer](https://genominer.ecoseek.org) catalogue
+which the [EcoSeek genominer](https://genoseek.ecoseek.org/) catalogue
 flags as having population-genetic data — plus the rabbit *Oryctolagus
 cuniculus* as an outgroup, and asks:
 
