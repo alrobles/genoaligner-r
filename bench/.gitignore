@@ -3,3 +3,4 @@ data/
 tools/
 out/
 bench_*.out
+sim/
