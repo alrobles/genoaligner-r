@@ -1,0 +1,5 @@
+# benchmark assets are external/reproducible — see README.md
+data/
+tools/
+out/
+bench_*.out

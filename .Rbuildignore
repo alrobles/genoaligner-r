@@ -7,6 +7,7 @@
 ^src/\.cache$
 ^\.Rcheck$
 ^CRAN-SUBMISSION$
+^bench$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
