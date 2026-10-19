@@ -16,6 +16,7 @@ msa_codon(
   names = NULL,
   gc = 1L,
   refine = FALSE,
+  backbone = c("codon", "protein"),
   iter_refine = 0L,
   fft_band = 0L,
   fft_lags = 4L,
@@ -44,6 +45,18 @@ msa_codon(
 - refine:
 
   Logical; run the stage-2 frameshift refinement pass.
+
+- backbone:
+
+  How the alignment backbone is built. `"codon"` (default) tokenizes
+  codons and aligns over the codon substitution matrix. `"protein"`
+  translates each sequence in its best frame, aligns at amino-acid level
+  ([`msa_align`](https://alrobles.github.io/genoaligner-r/reference/msa_align.md)
+  with `mode = "protein"`), then back-projects to a codon grid — more
+  accurate at high nucleotide divergence, with the same whole-codon
+  indel guarantee. Nucleotides outside the chosen frame (leading or
+  trailing partial codons) are kept as insertion columns at the
+  alignment ends and counted in `qc$partial`.
 
 - iter_refine:
 

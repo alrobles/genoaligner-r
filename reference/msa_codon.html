@@ -60,6 +60,7 @@ stays a multiple of 3 and the reading frame is preserved by construction.</p>
 <span>  names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  gc <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  refine <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  backbone <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"codon"</span>, <span class="st">"protein"</span><span class="op">)</span>,</span>
 <span>  iter_refine <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  fft_band <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  fft_lags <span class="op">=</span> <span class="fl">4L</span>,</span>
@@ -90,6 +91,18 @@ row names of the aligned matrix and FASTA output.</p></dd>
 
 <dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
 <dd><p>Logical; run the stage-2 frameshift refinement pass.</p></dd>
+
+
+<dt id="arg-backbone">backbone<a class="anchor" aria-label="anchor" href="#arg-backbone"></a></dt>
+<dd><p>How the alignment backbone is built. <code>"codon"</code>
+(default) tokenizes codons and aligns over the codon substitution
+matrix. <code>"protein"</code> translates each sequence in its best frame,
+aligns at amino-acid level (<code><a href="msa_align.html">msa_align</a></code> with
+<code>mode = "protein"</code>), then back-projects to a codon grid — more
+accurate at high nucleotide divergence, with the same whole-codon
+indel guarantee. Nucleotides outside the chosen frame (leading or
+trailing partial codons) are kept as insertion columns at the
+alignment ends and counted in <code>qc$partial</code>.</p></dd>
 
 
 <dt id="arg-iter-refine">iter_refine<a class="anchor" aria-label="anchor" href="#arg-iter-refine"></a></dt>

@@ -1,5 +1,21 @@
 # Changelog
 
+## genoaligner 2.0.0.9000 (development)
+
+- [`msa_codon()`](https://alrobles.github.io/genoaligner-r/reference/msa_codon.md)
+  gains `backbone = "protein"`: translate each sequence in frame 0,
+  build the alignment backbone at amino-acid level with the same
+  progressive engine (`msa_align(mode = "protein")`), then back-project
+  every residue to its codon — output is a codon grid with whole-codon
+  indels by construction. Simulation benchmarks show substantially
+  higher sum-of-pairs accuracy than the codon-token backbone at high
+  divergence (SPS ≈ 0.95 vs ≈ 0.5–0.7 on n=50, d=0.3 datasets) while
+  preserving codon phase purity 1.0. `backbone = "codon"` (default) is
+  unchanged. Nucleotides outside complete codons (trailing partial
+  codons) are kept as end insertion columns and counted in `qc$partial`;
+  `refine = TRUE` runs the stage-2 codon refinement on the
+  back-projected grid.
+
 ## genoaligner 2.0.0
 
 - **Breaking**:
