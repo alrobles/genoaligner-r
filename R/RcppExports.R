@@ -13,3 +13,7 @@ msa_run_cpp <- function(seqs, mode, gc_def, codon_refine, local_frame, iter_refi
     .Call(`_genoaligner_msa_run_cpp`, seqs, mode, gc_def, codon_refine, local_frame, iter_refine, fft_band, fft_lags, fft_min_rel)
 }
 
+codon_refine_cpp <- function(seqs, aln, gc_def, rounds) {
+    .Call(`_genoaligner_codon_refine_cpp`, seqs, aln, gc_def, rounds)
+}
+

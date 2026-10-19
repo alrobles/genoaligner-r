@@ -95,6 +95,15 @@ msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
 #' @param gc Integer; NCBI genetic code: \code{1L} (standard, default) or
 #'   \code{2L} (vertebrate mitochondrial — the right table for CYTB/COI/ND).
 #' @param refine Logical; run the stage-2 frameshift refinement pass.
+#' @param backbone How the alignment backbone is built. \code{"codon"}
+#'   (default) tokenizes codons and aligns over the codon substitution
+#'   matrix. \code{"protein"} translates each sequence in its best frame,
+#'   aligns at amino-acid level (\code{\link{msa_align}} with
+#'   \code{mode = "protein"}), then back-projects to a codon grid — more
+#'   accurate at high nucleotide divergence, with the same whole-codon
+#'   indel guarantee. Nucleotides outside the chosen frame (leading or
+#'   trailing partial codons) are kept as insertion columns at the
+#'   alignment ends and counted in \code{qc$partial}.
 #'
 #' @return A \code{genoaligner_msa} object. In codon mode \code{qc} carries
 #'   measured values per input sequence: \code{frame} (chosen reading frame,
@@ -107,23 +116,29 @@ msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
 #' msa_codon(c("ATGATAATCACC", "ATGATTATCACCTGA"), gc = 2)
 #' @export
 msa_codon <- function(seqs, names = NULL, gc = 1L, refine = FALSE,
+                      backbone = c("codon", "protein"),
                       iter_refine = 0L, fft_band = 0L,
                       fft_lags = 4L, fft_min_rel = 0.10) {
     gc <- as.integer(gc)
     if (length(gc) != 1L || is.na(gc) || !gc %in% c(1L, 2L))
         stop("gc must be a single integer: 1 (standard) or 2 (vertebrate mitochondrial).")
+    backbone <- match.arg(backbone)
     refine <- isTRUE(refine)
     fft <- check_fft_args(iter_refine, fft_band, fft_lags, fft_min_rel)
     seqs <- check_msa_seqs(seqs)
     names <- check_msa_names(names, seqs)
-    o <- msa_run_cpp(unname(seqs), "codon", gc_def = gc,
-                     codon_refine = if (refine) 1L else 0L,
-                     local_frame = refine,
-                     iter_refine = fft$iter, fft_band = fft$band,
-                     fft_lags = fft$lags, fft_min_rel = fft$min_rel)
+    o <- if (backbone == "protein") {
+        msa_codon_protein(seqs, gc, refine, fft)
+    } else {
+        msa_run_cpp(unname(seqs), "codon", gc_def = gc,
+                    codon_refine = if (refine) 1L else 0L,
+                    local_frame = refine,
+                    iter_refine = fft$iter, fft_band = fft$band,
+                    fft_lags = fft$lags, fft_min_rel = fft$min_rel)
+    }
     new_msa_result(o, seqs, names,
-                   params = c(list(mode = "codon", gc = gc,
-                                   refine = refine), fft$params))
+                   params = c(list(mode = "codon", gc = gc, refine = refine,
+                                   backbone = backbone), fft$params))
 }
 
 #' Coerce a genoaligner_msa alignment to ape::DNAbin

@@ -93,3 +93,18 @@ scale to dataset sizes where alternatives fail?
 - `simulate_codon.R` — axis A simulator.
 - `bench_sim.R` — axis A runner + truth metrics.
 - `out/` — results (gitignored). `data/`, `tools/` — gitignored inputs.
+
+## Algorithmic branch: protein backbone (2026-10)
+
+Axis A exposed that the codon-token backbone collapses at high divergence
+(n=50, d=0.3: SPS ≈ 0.5–0.7 vs msa_align ≈ 0.9) and cannot represent true
+frameshifts (fs_recall = 0 by construction). Experiments ruled out the
+guide tree (nt k-mer guide → no gain), gap cost, and iter_refine. The
+working fix is algorithmic: `msa_codon(backbone = "protein")` — translate
+in frame 0, align amino acids with the same engine, back-project to a
+codon grid. Result (same datasets): SPS ≈ 0.95 / 0.93 at pfs = 0 / 0.2,
+phase purity 1.0 — competitive with MAFFT/MACSE at a fraction of runtime.
+`refine = TRUE` can apply codon_refine on top but is OFF by default
+(it degrades clean high-divergence datasets: 0.954 → 0.871 observed).
+Tools recorded separately in the TSV: `msa_codon_protein`,
+`msa_codon_protein_refine`.

@@ -7,6 +7,7 @@
 // package exposes is exactly the one the C++ gates verify.
 #include <Rcpp.h>
 #include "genoaligner/api.hpp"
+#include "genoaligner/msa/msa.hpp"
 
 // [[Rcpp::export]]
 Rcpp::List msa_run_cpp(const std::vector<std::string>& seqs,
@@ -66,4 +67,15 @@ Rcpp::List msa_run_cpp(const std::vector<std::string>& seqs,
         Rcpp::_["frame"]   = frame,
         Rcpp::_["stops"]   = stops,
         Rcpp::_["partial"] = partial);
+}
+
+// bench-only shim: run the stage-2 codon phase DP over an arbitrary
+// codon-grid alignment (e.g. a protein back-projection skeleton).
+// [[Rcpp::export]]
+Rcpp::CharacterVector codon_refine_cpp(const std::vector<std::string>& seqs,
+                                       const std::vector<std::string>& aln,
+                                       int gc_def, int rounds)
+{
+    genomsa::Params P = genomsa::codon_params(gc_def);
+    return Rcpp::wrap(genomsa::codon_refine(seqs, aln, P, rounds));
 }
