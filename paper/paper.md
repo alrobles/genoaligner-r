@@ -218,6 +218,14 @@ feasible at phylogenomic scale.
 | + refine="auto" | 0.955 | 0.768 | 0.840 (0.13) | 0.469 (0.03) | 0.6 s |
 | prank | 0.344 | 0.196 | — | — | ~72 s |
 
+**Figure 1** (`figures/fig1_sps.pdf`): SPS vs divergence at pfs = 0
+and 0.2 (n = 50, mean ± SE over 5 replicates). Left panel: the protein
+backbone tracks the MAFFT/DECIPHER tier while the codon-token backbone
+detaches at d = 0.3 — the collapse this work set out to fix. Right
+panel: with frameshifts present, MACSE and the nucleotide aligners
+lead on raw SPS while the selective-refine variants recover ground
+over their un-refined backbones.
+
 Key findings:
 
 * The protein backbone is **third overall in the hard regime**
@@ -257,14 +265,21 @@ Key findings:
   simulation dataset (axis A). Real-world CDS routinely contains
   partial codons; the tool cannot process them.
 
+**Figure 2** (`figures/fig2_real.pdf`): per-locus runtime (log scale)
+and codon phase purity across the 31 head-to-head loci. msa_codon sits
+two orders of magnitude below MACSE while matching its phase purity
+exactly; every non-codon-aware tool — including fast ones — scatters
+phase across the loci.
+
 ## 3.3 Axis B — full-scale (all sequences per locus)
 
 `msa_codon` aligned the complete 31-locus set (up to **3,559
 sequences**, CYTB) in **430 s total** (median 4.7 s/locus), codon phase
-purity 1.000 on every locus. MACSE is infeasible at this scale
-(extrapolating its n=50 timings) — reported honestly as a feasibility
-result: for thousands-of-sequences codon-aware MSA, genoaligner is
-currently the only practical option.
+purity 1.000 on every locus (**Figure 3**, `figures/fig3_scale.pdf` —
+log-log runtime vs n, near-linear scaling). MACSE is infeasible at this
+scale (extrapolating its n=50 timings) — reported honestly as a
+feasibility result: for thousands-of-sequences codon-aware MSA,
+genoaligner is currently the only practical option.
 
 # 4. Discussion
 
