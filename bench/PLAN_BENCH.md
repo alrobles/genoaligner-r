@@ -108,3 +108,21 @@ phase purity 1.0 — competitive with MAFFT/MACSE at a fraction of runtime.
 (it degrades clean high-divergence datasets: 0.954 → 0.871 observed).
 Tools recorded separately in the TSV: `msa_codon_protein`,
 `msa_codon_protein_refine`.
+
+## Selective refinement: refine = "auto" (2026-10)
+
+Global refine trades clean-CDS accuracy for frameshift recovery.
+`codon_refine_sel_cpp` runs the per-row phase DP only on rows with
+`nchar %% 3 != 0` — every other row contributes its backbone placement
+verbatim (identity Place), so clean input is returned unchanged and
+event columns are owned only by sequences that provably cannot be
+in-frame. Flagging on stop counts was rejected: at div = 0.3 JC69
+produces stops on every row, so the flag degenerates to global refine.
+
+Per-dataset results (small grid): on pfs = 0.2, `msa_codon_auto` beats
+plain `msa_codon` on SPS in 19/20 datasets (mean ≈ +0.10); on the
+protein backbone, `msa_codon_protein_auto` ≥ `msa_codon_protein` in
+~13/20 datasets and recovers fs_recall ≈ 0.3–0.5 (vs 0 un-refined)
+with identical output on pfs = 0. Note: the engine forces an internal
+refine round when `local_frame = TRUE`, so the codon-auto path uses
+strict frame-0 tokenization + selective refine at R level.

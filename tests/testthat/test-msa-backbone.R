@@ -94,3 +94,32 @@ test_that("backbone=protein + refine=TRUE runs the stage-2 pass", {
     expect_s3_class(a, "genoaligner_msa")
     expect_true(a$params$refine)
 })
+
+test_that("refine=auto: in-frame input is returned exactly as the backbone", {
+    s <- c(a = "ATGAAATTTCCC", b = "ATGAAAGGGCCC", c = "ATGCCCTTTAAA")
+    auto <- msa_codon(s, backbone = "protein", refine = "auto")
+    plain <- msa_codon(s, backbone = "protein")
+    expect_identical(as.matrix(auto), as.matrix(plain))
+    # same invariance on the codon backbone
+    auto_c <- msa_codon(s, refine = "auto")
+    plain_c <- msa_codon(s)
+    expect_identical(as.matrix(auto_c), as.matrix(plain_c))
+})
+
+test_that("refine=auto: a non-mult-3 sequence can emit event columns", {
+    s <- c(a = "ATGAAATTTCC", b = "ATGAAATTTCCC")   # a: 11 nt
+    a <- msa_codon(s, backbone = "protein", refine = "auto")
+    expect_s3_class(a, "genoaligner_msa")
+    expect_equal(a$params$refine, "auto")
+    ac <- msa_codon(s, refine = "auto")
+    expect_s3_class(ac, "genoaligner_msa")
+    # every row keeps the same length
+    m <- as.matrix(ac)
+    expect_true(all(apply(m, 1, function(r) nchar(paste0(r, collapse = "")))
+                    == ncol(m)))
+})
+
+test_that("refine rejects invalid values", {
+    expect_error(msa_codon("ATGAAA", refine = "x"))
+    expect_error(msa_codon("ATGAAA", backbone = "protein", refine = "x"))
+})

@@ -83,7 +83,21 @@ msa_codon_protein <- function(seqs, gc, refine, fft) {
     pm <- as.matrix(pa)
     bp <- codon_backproject(pm, trs)
     rows <- apply(bp$core, 1L, paste0, collapse = "")
-    if (refine) rows <- unname(codon_refine_cpp(unname(seqs), rows, gc, 1L))
+    if (identical(refine, TRUE)) {
+        rows <- unname(codon_refine_cpp(unname(seqs), rows, gc, 1L))
+    } else if (identical(refine, "auto")) {
+        # selective stage-2: only sequences whose length is not a
+        # multiple of 3 may produce frameshift event columns — the
+        # protein backbone cannot place them in-frame by construction.
+        # Clean-CDS rows keep the backbone verbatim, so "auto" never
+        # degrades in-frame input (flagging on stop count would fire
+        # on every row at high divergence).
+        flag <- nchar(seqs) %% 3L != 0L
+        if (any(flag)) {
+            sel <- codon_refine_sel_cpp(unname(seqs), rows, flag, gc, 1L)
+            rows <- sel$aln
+        }
+    }
     # flanks are unplaced nt: emit as insertion columns at the ends so no
     # sequence content is dropped (counted in qc$partial).
     maxl <- max(nchar(bp$lead)); maxt <- max(nchar(bp$tail))

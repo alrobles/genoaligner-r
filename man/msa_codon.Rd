@@ -28,11 +28,16 @@ row names of the aligned matrix and FASTA output.}
 \item{gc}{Integer; NCBI genetic code: \code{1L} (standard, default) or
 \code{2L} (vertebrate mitochondrial — the right table for CYTB/COI/ND).}
 
-\item{refine}{Logical; run the stage-2 frameshift refinement pass.}
+\item{refine}{Frameshift refinement. \code{FALSE} (default): no stage-2
+pass; \code{TRUE}: run it on every row (helps sequences with true
+frameshifts but costs accuracy on clean CDS); \code{"auto"}:
+selective — only sequences whose length is not a multiple of 3 may
+produce frameshift event columns, so in-frame input is returned
+exactly as the un-refined backbone.}
 
 \item{backbone}{How the alignment backbone is built. \code{"codon"}
 (default) tokenizes codons and aligns over the codon substitution
-matrix. \code{"protein"} translates each sequence in its best frame,
+matrix. \code{"protein"} translates each sequence in frame 0,
 aligns at amino-acid level (\code{\link{msa_align}} with
 \code{mode = "protein"}), then back-projects to a codon grid — more
 accurate at high nucleotide divergence, with the same whole-codon

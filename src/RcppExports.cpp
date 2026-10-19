@@ -74,12 +74,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// codon_refine_sel_cpp
+Rcpp::List codon_refine_sel_cpp(const std::vector<std::string>& seqs, const std::vector<std::string>& aln, const std::vector<bool>& flag, int gc_def, int rounds);
+RcppExport SEXP _genoaligner_codon_refine_sel_cpp(SEXP seqsSEXP, SEXP alnSEXP, SEXP flagSEXP, SEXP gc_defSEXP, SEXP roundsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type aln(alnSEXP);
+    Rcpp::traits::input_parameter< const std::vector<bool>& >::type flag(flagSEXP);
+    Rcpp::traits::input_parameter< int >::type gc_def(gc_defSEXP);
+    Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
+    rcpp_result_gen = Rcpp::wrap(codon_refine_sel_cpp(seqs, aln, flag, gc_def, rounds));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_genoaligner_align_one", (DL_FUNC) &_genoaligner_align_one, 4},
     {"_genoaligner_align_sw_one", (DL_FUNC) &_genoaligner_align_sw_one, 7},
     {"_genoaligner_msa_run_cpp", (DL_FUNC) &_genoaligner_msa_run_cpp, 9},
     {"_genoaligner_codon_refine_cpp", (DL_FUNC) &_genoaligner_codon_refine_cpp, 4},
+    {"_genoaligner_codon_refine_sel_cpp", (DL_FUNC) &_genoaligner_codon_refine_sel_cpp, 5},
     {NULL, NULL, 0}
 };
 

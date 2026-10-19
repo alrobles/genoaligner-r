@@ -94,10 +94,15 @@ msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
 #' @inheritParams msa_align
 #' @param gc Integer; NCBI genetic code: \code{1L} (standard, default) or
 #'   \code{2L} (vertebrate mitochondrial — the right table for CYTB/COI/ND).
-#' @param refine Logical; run the stage-2 frameshift refinement pass.
+#' @param refine Frameshift refinement. \code{FALSE} (default): no stage-2
+#'   pass; \code{TRUE}: run it on every row (helps sequences with true
+#'   frameshifts but costs accuracy on clean CDS); \code{"auto"}:
+#'   selective — only sequences whose length is not a multiple of 3 may
+#'   produce frameshift event columns, so in-frame input is returned
+#'   exactly as the un-refined backbone.
 #' @param backbone How the alignment backbone is built. \code{"codon"}
 #'   (default) tokenizes codons and aligns over the codon substitution
-#'   matrix. \code{"protein"} translates each sequence in its best frame,
+#'   matrix. \code{"protein"} translates each sequence in frame 0,
 #'   aligns at amino-acid level (\code{\link{msa_align}} with
 #'   \code{mode = "protein"}), then back-projects to a codon grid — more
 #'   accurate at high nucleotide divergence, with the same whole-codon
@@ -123,12 +128,29 @@ msa_codon <- function(seqs, names = NULL, gc = 1L, refine = FALSE,
     if (length(gc) != 1L || is.na(gc) || !gc %in% c(1L, 2L))
         stop("gc must be a single integer: 1 (standard) or 2 (vertebrate mitochondrial).")
     backbone <- match.arg(backbone)
-    refine <- isTRUE(refine)
+    refine <- if (is.character(refine)) match.arg(refine, "auto")
+              else isTRUE(refine)
     fft <- check_fft_args(iter_refine, fft_band, fft_lags, fft_min_rel)
     seqs <- check_msa_seqs(seqs)
     names <- check_msa_names(names, seqs)
     o <- if (backbone == "protein") {
         msa_codon_protein(seqs, gc, refine, fft)
+    } else if (identical(refine, "auto")) {
+        # Strict frame-0 tokenization gives a pure triplet grid
+        # (local_frame cannot be used here: the engine forces an internal
+        # refine round on it, and its partial fills break re-tokenization).
+        # Then selective stage-2: only rows whose length is not a
+        # multiple of 3 may emit frameshift event columns.
+        oo <- msa_run_cpp(unname(seqs), "codon", gc_def = gc,
+                          codon_refine = 0L, local_frame = FALSE,
+                          iter_refine = fft$iter, fft_band = fft$band,
+                          fft_lags = fft$lags, fft_min_rel = fft$min_rel)
+        if (oo$status == "ok" && any(nchar(seqs) %% 3L != 0L)) {
+            sel <- codon_refine_sel_cpp(unname(seqs), oo$aligned,
+                                        nchar(seqs) %% 3L != 0L, gc, 1L)
+            oo$aligned <- sel$aln
+        }
+        oo
     } else {
         msa_run_cpp(unname(seqs), "codon", gc_def = gc,
                     codon_refine = if (refine) 1L else 0L,

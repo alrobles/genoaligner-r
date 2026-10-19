@@ -17,3 +17,7 @@ codon_refine_cpp <- function(seqs, aln, gc_def, rounds) {
     .Call(`_genoaligner_codon_refine_cpp`, seqs, aln, gc_def, rounds)
 }
 
+codon_refine_sel_cpp <- function(seqs, aln, flag, gc_def, rounds) {
+    .Call(`_genoaligner_codon_refine_sel_cpp`, seqs, aln, flag, gc_def, rounds)
+}
+

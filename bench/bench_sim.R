@@ -29,7 +29,7 @@ opt <- function(key, default) {
     if (length(m)) sub(paste0("^--", key, "="), "", m[1]) else default
 }
 tools_keep <- strsplit(opt("tools",
-    "msa_codon,msa_codon_refine,msa_codon_protein,msa_align,macse,decipher_translation,decipher_seqs,mafft,prank"),
+    "msa_codon,msa_codon_refine,msa_codon_protein,msa_codon_protein_refine,msa_codon_protein_auto,msa_codon_auto,msa_align,macse,decipher_translation,decipher_seqs,mafft,prank"),
     ",")[[1]]
 
 # external binaries live in the conda benchtools env
@@ -191,6 +191,12 @@ run_tool <- function(tool, seqs, ifile, ofile) {
             msa_codon_protein_refine = apply(as.matrix(msa_codon(seqs, names = names(seqs),
                               gc = 1L, backbone = "protein", refine = TRUE)),
                               1, paste0, collapse = ""),
+            msa_codon_protein_auto = apply(as.matrix(msa_codon(seqs, names = names(seqs),
+                              gc = 1L, backbone = "protein", refine = "auto")),
+                              1, paste0, collapse = ""),
+            msa_codon_auto = apply(as.matrix(msa_codon(seqs, names = names(seqs),
+                              gc = 1L, refine = "auto")),
+                              1, paste0, collapse = ""),
             msa_align = apply(as.matrix(msa_align(seqs, names = names(seqs))),
                               1, paste0, collapse = ""),
             decipher_translation = {
@@ -244,7 +250,8 @@ grid <- if (opt("grid", "small") == "small") {
 }
 
 tools <- intersect(c("msa_codon", "msa_codon_refine", "msa_codon_protein",
-                     "msa_codon_protein_refine", "msa_align", "macse",
+                     "msa_codon_protein_refine", "msa_codon_protein_auto",
+                     "msa_codon_auto", "msa_align", "macse",
                      "decipher_translation", "decipher_seqs", "mafft", "prank"),
                    tools_keep)
 
