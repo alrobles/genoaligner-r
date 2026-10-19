@@ -10,6 +10,7 @@ msa_codon(
   gc = 1L,
   refine = FALSE,
   backbone = c("codon", "protein"),
+  guide_tree = NULL,
   iter_refine = 0L,
   fft_band = 0L,
   fft_lags = 4L,
@@ -44,6 +45,13 @@ accurate at high nucleotide divergence, with the same whole-codon
 indel guarantee. Nucleotides outside the chosen frame (leading or
 trailing partial codons) are kept as insertion columns at the
 alignment ends and counted in \code{qc$partial}.}
+
+\item{guide_tree}{Optional \code{ape::phylo} guide tree overriding
+\code{guide}: the progressive merges follow its topology (branch
+lengths are ignored). Must be fully bifurcating with
+\code{tip.label} matching the sequence names. Diagnostic arm for
+benchmarking — e.g. pass the simulation's true tree to separate
+guide-tree error from scoring error.}
 
 \item{iter_refine}{Integer \eqn{\ge 0}; iterative-refinement rounds over
 the guide-tree bipartitions (MAFFT \code{FFT-NS-i} class): every tree

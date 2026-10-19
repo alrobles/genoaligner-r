@@ -74,6 +74,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// msa_sp_score_cpp
+double msa_sp_score_cpp(const std::vector<std::string>& rows, const std::string& mode, int gc_def);
+RcppExport SEXP _genoaligner_msa_sp_score_cpp(SEXP rowsSEXP, SEXP modeSEXP, SEXP gc_defSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< int >::type gc_def(gc_defSEXP);
+    rcpp_result_gen = Rcpp::wrap(msa_sp_score_cpp(rows, mode, gc_def));
+    return rcpp_result_gen;
+END_RCPP
+}
+// msa_tree_cpp
+Rcpp::List msa_tree_cpp(const std::vector<std::string>& seqs, const std::string& mode, int gc_def, int codon_refine, bool local_frame, int iter_refine, int fft_band, int fft_lags, double fft_min_rel, const std::vector<int>& mleft, const std::vector<int>& mright);
+RcppExport SEXP _genoaligner_msa_tree_cpp(SEXP seqsSEXP, SEXP modeSEXP, SEXP gc_defSEXP, SEXP codon_refineSEXP, SEXP local_frameSEXP, SEXP iter_refineSEXP, SEXP fft_bandSEXP, SEXP fft_lagsSEXP, SEXP fft_min_relSEXP, SEXP mleftSEXP, SEXP mrightSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< int >::type gc_def(gc_defSEXP);
+    Rcpp::traits::input_parameter< int >::type codon_refine(codon_refineSEXP);
+    Rcpp::traits::input_parameter< bool >::type local_frame(local_frameSEXP);
+    Rcpp::traits::input_parameter< int >::type iter_refine(iter_refineSEXP);
+    Rcpp::traits::input_parameter< int >::type fft_band(fft_bandSEXP);
+    Rcpp::traits::input_parameter< int >::type fft_lags(fft_lagsSEXP);
+    Rcpp::traits::input_parameter< double >::type fft_min_rel(fft_min_relSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type mleft(mleftSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type mright(mrightSEXP);
+    rcpp_result_gen = Rcpp::wrap(msa_tree_cpp(seqs, mode, gc_def, codon_refine, local_frame, iter_refine, fft_band, fft_lags, fft_min_rel, mleft, mright));
+    return rcpp_result_gen;
+END_RCPP
+}
 // codon_refine_sel_cpp
 Rcpp::List codon_refine_sel_cpp(const std::vector<std::string>& seqs, const std::vector<std::string>& aln, const std::vector<bool>& flag, int gc_def, int rounds);
 RcppExport SEXP _genoaligner_codon_refine_sel_cpp(SEXP seqsSEXP, SEXP alnSEXP, SEXP flagSEXP, SEXP gc_defSEXP, SEXP roundsSEXP) {
@@ -95,6 +129,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_genoaligner_align_sw_one", (DL_FUNC) &_genoaligner_align_sw_one, 7},
     {"_genoaligner_msa_run_cpp", (DL_FUNC) &_genoaligner_msa_run_cpp, 9},
     {"_genoaligner_codon_refine_cpp", (DL_FUNC) &_genoaligner_codon_refine_cpp, 4},
+    {"_genoaligner_msa_sp_score_cpp", (DL_FUNC) &_genoaligner_msa_sp_score_cpp, 3},
+    {"_genoaligner_msa_tree_cpp", (DL_FUNC) &_genoaligner_msa_tree_cpp, 11},
     {"_genoaligner_codon_refine_sel_cpp", (DL_FUNC) &_genoaligner_codon_refine_sel_cpp, 5},
     {NULL, NULL, 0}
 };

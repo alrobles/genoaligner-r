@@ -81,6 +81,142 @@ Rcpp::CharacterVector codon_refine_cpp(const std::vector<std::string>& seqs,
     return Rcpp::wrap(genomsa::codon_refine(seqs, aln, P, rounds));
 }
 
+// Sum-of-pairs objective of a finished MSA (genomsa::msa_sp_score), the
+// same scorer iterative refinement maximizes internally. Exposed for
+// diagnostics: e.g. does the model SP rank backbone variants the way
+// true-SPS does, enabling "select = sp" model selection later.
+// mode "codon" expects a pure codon grid (row width %3 == 0): each
+// triplet is tokenized with cr_token3, "---" stays a gap, partial or
+// ambiguous triplets become token 64 (scores 0 against everything) --
+// the same semantics the stage-2 profile uses. For a refined MSA with
+// event columns, subset the codon columns first (cofs).
+// [[Rcpp::export]]
+double msa_sp_score_cpp(const std::vector<std::string>& rows,
+                        const std::string& mode, int gc_def)
+{
+    // The engine scorer trusts equal-width rows; enforce it here.
+    const int W = rows.empty() ? 0 : (int)rows[0].size();
+    for (const auto& r : rows)
+        if ((int)r.size() != W)
+            Rcpp::stop("msa_sp_score: ragged rows");
+    if (mode == "protein")
+        return genomsa::msa_sp_score(rows, genomsa::protein_params());
+    if (mode == "codon") {
+        if (W % 3 != 0)
+            Rcpp::stop("msa_sp_score(codon): row width must be a "
+                       "multiple of 3 -- subset codon columns (cofs) "
+                       "of a refined MSA first");
+        std::vector<std::string> tok(rows.size());
+        for (size_t i = 0; i < rows.size(); ++i) {
+            const char* p = rows[i].c_str();
+            std::string& t = tok[i];
+            t.reserve(W / 3);
+            for (int j = 0; j < W; j += 3) {
+                const char* q = p + j;
+                if (q[0] == '-' && q[1] == '-' && q[2] == '-')
+                    t.push_back('-');
+                else
+                    t.push_back((char)(128 + genoaligner::cr_token3(q)));
+            }
+        }
+        return genomsa::msa_sp_score(tok, genomsa::codon_params(gc_def));
+    }
+    return genomsa::msa_sp_score(rows, genomsa::Params{});
+}
+
+// Guide-tree-override MSA (R2 diagnostic arm): the caller supplies the
+// progressive guide as a post-order merge list over seq indices
+// (mleft[k]/mright[k] = engine child ids of internal node n+k; children
+// always carry smaller ids than their parent, so the last merge is the
+// root join). Mode dispatch mirrors msa_run_cpp: dna/protein feed
+// sequences directly; codon tokenizes (strict or local-frame), aligns
+// tokens under the supplied tree, decodes, then runs codon_refine for
+// the requested rounds (local_frame forces >= 1, same rule as the
+// vendored run_codon). Params match params_for() exactly.
+// [[Rcpp::export]]
+Rcpp::List msa_tree_cpp(const std::vector<std::string>& seqs,
+                        const std::string& mode, int gc_def,
+                        int codon_refine, bool local_frame,
+                        int iter_refine, int fft_band, int fft_lags,
+                        double fft_min_rel,
+                        const std::vector<int>& mleft,
+                        const std::vector<int>& mright)
+{
+    const int n = (int)seqs.size();
+    const int nint = (int)mleft.size();
+    auto bad = [&](const char* msg) {
+        return Rcpp::List::create(
+            Rcpp::_["status"]  = "invalid_argument",
+            Rcpp::_["error"]   = msg,
+            Rcpp::_["aligned"] = Rcpp::CharacterVector(0),
+            Rcpp::_["width"]   = 0,
+            Rcpp::_["frame"]   = Rcpp::IntegerVector(0),
+            Rcpp::_["stops"]   = Rcpp::IntegerVector(0),
+            Rcpp::_["partial"] = Rcpp::IntegerVector(0));
+    };
+    if (nint != n - 1 || nint != (int)mright.size())
+        return bad("msa_tree_cpp: a binary guide tree over n leaves "
+                   "needs exactly n-1 merges");
+    genomsa::Tree t;
+    t.nodes.resize(n + nint);
+    for (int k = 0; k < nint; ++k) {
+        const int u = n + k;
+        if (mleft[k] < 0 || mright[k] < 0 || mleft[k] >= u || mright[k] >= u)
+            return bad("msa_tree_cpp: merge children must be existing "
+                       "lower-id nodes (post-order)");
+        t.nodes[u].left  = mleft[k];
+        t.nodes[u].right = mright[k];
+    }
+    t.root = n + nint - 1;
+
+    genomsa::Params P;
+    std::vector<genomsa::CodonQc> cqc;
+    const bool is_codon = mode == "codon";
+    if      (mode == "protein") P = genomsa::protein_params();
+    else if (is_codon) {
+        P = genomsa::codon_params(gc_def);
+        P.codon_refine      = codon_refine;
+        P.codon_local_frame = local_frame ? 1 : 0;
+    }
+    else if (mode != "dna") return bad("msa_tree_cpp: unknown mode");
+    P.iter_refine = iter_refine;
+    P.fft_band    = fft_band;
+    P.fft_lags    = fft_lags;
+    P.fft_min_rel = (float)fft_min_rel;
+
+    std::vector<std::string> msa;
+    if (!is_codon) {
+        msa = genomsa::msa_align_with_tree(seqs, t, P);
+    } else {
+        std::vector<std::string> tok =
+            local_frame ? genomsa::codon_encode_local(seqs, P, &cqc)
+                        : genomsa::codon_encode(seqs, gc_def, &cqc);
+        msa = genomsa::codon_decode(
+            genomsa::msa_align_with_tree(tok, t, P));
+        int rounds = codon_refine;
+        if (local_frame && rounds < 1) rounds = 1;
+        if (rounds > 0)
+            msa = genomsa::codon_refine(seqs, msa, P, rounds);
+    }
+
+    const R_xlen_t m = (R_xlen_t)n;
+    Rcpp::IntegerVector frame(m, NA_INTEGER), stops(m, NA_INTEGER),
+        partial(m, NA_INTEGER);
+    for (R_xlen_t i = 0; i < m && i < (R_xlen_t)cqc.size(); ++i) {
+        frame[i]   = cqc[i].frame;
+        stops[i]   = cqc[i].stops;
+        partial[i] = cqc[i].partial;
+    }
+    return Rcpp::List::create(
+        Rcpp::_["status"]  = "ok",
+        Rcpp::_["error"]   = NA_STRING,
+        Rcpp::_["aligned"] = Rcpp::wrap(msa),
+        Rcpp::_["width"]   = msa.empty() ? 0 : (int)msa[0].size(),
+        Rcpp::_["frame"]   = frame,
+        Rcpp::_["stops"]   = stops,
+        Rcpp::_["partial"] = partial);
+}
+
 // Selective stage-2 refinement: the per-row phase DP only runs for rows
 // flagged true; every other row contributes its input placement verbatim
 // (its fills in the codon columns, no event columns). The profile still

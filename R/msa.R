@@ -27,6 +27,12 @@
 #' @param mode \code{"dna"} (default) or \code{"protein"}.
 #' @param guide Guide-tree construction; only \code{"nj"} (deterministic
 #'   neighbor joining) exists today.
+#' @param guide_tree Optional \code{ape::phylo} guide tree overriding
+#'   \code{guide}: the progressive merges follow its topology (branch
+#'   lengths are ignored). Must be fully bifurcating with
+#'   \code{tip.label} matching the sequence names. Diagnostic arm for
+#'   benchmarking — e.g. pass the simulation's true tree to separate
+#'   guide-tree error from scoring error.
 #' @param iter_refine Integer \eqn{\ge 0}; iterative-refinement rounds over
 #'   the guide-tree bipartitions (MAFFT \code{FFT-NS-i} class): every tree
 #'   edge splits the alignment into two induced sub-profiles, the pair is
@@ -61,7 +67,8 @@
 #'           mode = "protein")
 #' @export
 msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
-                      guide = "nj", iter_refine = 0L, fft_band = 0L,
+                      guide = "nj", guide_tree = NULL,
+                      iter_refine = 0L, fft_band = 0L,
                       fft_lags = 4L, fft_min_rel = 0.10) {
     mode <- match.arg(mode)
     if (!identical(guide, "nj"))
@@ -69,12 +76,24 @@ msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
     fft <- check_fft_args(iter_refine, fft_band, fft_lags, fft_min_rel)
     seqs <- check_msa_seqs(seqs)
     names <- check_msa_names(names, seqs)
-    o <- msa_run_cpp(unname(seqs), mode, gc_def = 1L,
+    o <- if (!is.null(guide_tree)) {
+        mg <- phylo_to_merges(guide_tree, names)
+        msa_tree_cpp(unname(seqs), mode, gc_def = 1L,
                      codon_refine = 0L, local_frame = FALSE,
                      iter_refine = fft$iter, fft_band = fft$band,
-                     fft_lags = fft$lags, fft_min_rel = fft$min_rel)
+                     fft_lags = fft$lags, fft_min_rel = fft$min_rel,
+                     mg$mleft, mg$mright)
+    } else {
+        msa_run_cpp(unname(seqs), mode, gc_def = 1L,
+                    codon_refine = 0L, local_frame = FALSE,
+                    iter_refine = fft$iter, fft_band = fft$band,
+                    fft_lags = fft$lags, fft_min_rel = fft$min_rel)
+    }
     new_msa_result(o, seqs, names,
-                   params = c(list(mode = mode, guide = guide), fft$params))
+                   params = c(list(mode = mode,
+                                   guide = if (is.null(guide_tree))
+                                       guide else "provided"),
+                              fft$params))
 }
 
 #' Codon-aware multiple sequence alignment
@@ -122,6 +141,7 @@ msa_align <- function(seqs, names = NULL, mode = c("dna", "protein"),
 #' @export
 msa_codon <- function(seqs, names = NULL, gc = 1L, refine = FALSE,
                       backbone = c("codon", "protein"),
+                      guide_tree = NULL,
                       iter_refine = 0L, fft_band = 0L,
                       fft_lags = 4L, fft_min_rel = 0.10) {
     gc <- as.integer(gc)
@@ -133,8 +153,27 @@ msa_codon <- function(seqs, names = NULL, gc = 1L, refine = FALSE,
     fft <- check_fft_args(iter_refine, fft_band, fft_lags, fft_min_rel)
     seqs <- check_msa_seqs(seqs)
     names <- check_msa_names(names, seqs)
+    mg <- if (!is.null(guide_tree)) phylo_to_merges(guide_tree, names)
     o <- if (backbone == "protein") {
-        msa_codon_protein(seqs, gc, refine, fft)
+        msa_codon_protein(seqs, gc, refine, fft, guide_tree, names)
+    } else if (!is.null(mg)) {
+        # Supplied guide tree: same dispatch as msa_run_cpp but the
+        # progressive stage follows the given topology. "auto" still
+        # needs the strict-tokenization grid + selective stage-2.
+        oo <- msa_tree_cpp(unname(seqs), "codon", gc_def = gc,
+                           codon_refine = if (identical(refine, "auto"))
+                               0L else as.integer(refine),
+                           local_frame = identical(refine, TRUE),
+                           iter_refine = fft$iter, fft_band = fft$band,
+                           fft_lags = fft$lags, fft_min_rel = fft$min_rel,
+                           mg$mleft, mg$mright)
+        if (oo$status == "ok" && identical(refine, "auto") &&
+            any(nchar(seqs) %% 3L != 0L)) {
+            sel <- codon_refine_sel_cpp(unname(seqs), oo$aligned,
+                                        nchar(seqs) %% 3L != 0L, gc, 1L)
+            oo$aligned <- sel$aln
+        }
+        oo
     } else if (identical(refine, "auto")) {
         # Strict frame-0 tokenization gives a pure triplet grid
         # (local_frame cannot be used here: the engine forces an internal
@@ -161,6 +200,43 @@ msa_codon <- function(seqs, names = NULL, gc = 1L, refine = FALSE,
     new_msa_result(o, seqs, names,
                    params = c(list(mode = "codon", gc = gc, refine = refine,
                                    backbone = backbone), fft$params))
+}
+
+#' Sum-of-pairs score of a finished alignment
+#'
+#' The objective iterative refinement maximizes internally
+#' (\code{iter_refine > 0}): every unordered row pair contributes its
+#' induced pairwise alignment, scored through the mode's substitution
+#' table minus gap-run costs. Diagnostic use — e.g. checking whether the
+#' model's own SP ranks backbone variants the way an external accuracy
+#' metric does.
+#'
+#' For \code{mode = "codon"} the input must be a pure codon grid (row
+#' width a multiple of 3, every column a triplet). To score a refined
+#' alignment that contains frameshift event columns, subset the codon
+#' columns first (the \code{cofs} offsets returned by the selective
+#' refinement layer).
+#'
+#' @param x A \code{genoaligner_msa} object, a character matrix, or a
+#'   character vector of equal-length aligned rows.
+#' @param mode \code{"dna"} (default), \code{"protein"} or \code{"codon"}.
+#' @param gc Integer; NCBI genetic code for \code{mode = "codon"}.
+#' @return Numeric scalar; higher is better.
+#' @examples
+#' a <- msa_align(c("ACGTACGT", "ACGTTCGT"))
+#' msa_sp_score(a)
+#' @export
+msa_sp_score <- function(x, mode = c("dna", "protein", "codon"), gc = 1L) {
+    mode <- match.arg(mode)
+    rows <- if (inherits(x, "genoaligner_msa"))
+        apply(x$aligned, 1L, paste0, collapse = "")
+    else if (is.character(x) || is.matrix(x))
+        apply(as.matrix(x), 1L, paste0, collapse = "")
+    else stop("x must be a genoaligner_msa, matrix, or character vector.")
+    gc <- as.integer(gc)
+    if (mode == "codon" && (length(gc) != 1L || !gc %in% c(1L, 2L)))
+        stop("gc must be 1 or 2 for mode = \"codon\".")
+    msa_sp_score_cpp(unname(rows), mode, gc)
 }
 
 #' Coerce a genoaligner_msa alignment to ape::DNAbin
@@ -227,6 +303,48 @@ check_msa_seqs <- function(seqs) {
     if (anyNA(seqs))
         stop("seqs must not contain NA.")
     seqs
+}
+
+# Convert an ape::phylo to the engine's merge list: leaves are 0-based
+# sequence indices (tip.label matched against names), internal nodes
+# take ids n + postorder rank so every child's id is smaller than its
+# parent's -- the invariant msa_iter_refine/tree_levels rely on.
+# Returned mleft[k]/mright[k] are the two children of internal node
+# n+k in that order; the last merge is the root join.
+phylo_to_merges <- function(phy, names) {
+    if (!inherits(phy, "phylo"))
+        stop("guide_tree must be an ape::phylo object.")
+    n <- length(names)
+    if (is.null(phy$edge) || length(phy$tip.label) != n)
+        stop("guide_tree must have exactly one tip per sequence.")
+    leaf <- match(phy$tip.label, names)
+    if (anyNA(leaf) || anyDuplicated(phy$tip.label))
+        stop("guide_tree tip labels must match the sequence names exactly.")
+    nnode <- phy$Nnode
+    if (is.null(nnode) || nnode != n - 1L)
+        stop("guide_tree must be fully bifurcating.")
+    ch <- vector("list", n + nnode)
+    for (e in seq_len(nrow(phy$edge)))
+        ch[[phy$edge[e, 1L]]] <- c(ch[[phy$edge[e, 1L]]], phy$edge[e, 2L])
+    if (any(lengths(ch[n + seq_len(nnode)]) != 2L))
+        stop("guide_tree must be fully bifurcating.")
+    root <- setdiff(n + seq_len(nnode), phy$edge[, 2L])
+    if (length(root) != 1L)
+        stop("guide_tree has no unique root.")
+    # DFS preorder over ape ids, reversed: descendants precede ancestors.
+    post <- integer(0); st <- root
+    while (length(st)) {
+        u <- st[length(st)]; st <- st[-length(st)]
+        post <- c(post, u)
+        if (u > n) st <- c(st, ch[[u]])
+    }
+    internal <- rev(post[post > n])
+    id <- integer(n + nnode)
+    id[seq_len(n)] <- leaf - 1L
+    id[internal] <- n + seq_along(internal) - 1L
+    kids <- ch[internal]
+    list(mleft  = id[vapply(kids, `[`, 0L, 1L)],
+         mright = id[vapply(kids, `[`, 0L, 2L)])
 }
 
 # Refine/FFT request validation at the R boundary — same refusal rules

@@ -21,27 +21,30 @@ real loci ~52% of rows are flagged → phase purity drops); (2) clean
 d=0.3 SPS gap of ~0.03 vs MAFFT — shown *not* to be guide-tree,
 `gap_open`, or `iter_refine` on the codon-token path.
 
-## Phase 0 — make gaps measurable (cheap, do first)
+## Phase 0 — make gaps measurable — DONE 2026-10-19 (diag_phase0.R)
 
-**R1. Simulator: compensated fs pairs + per-row fs truth. [S, pure R]**
-`simulate_codon.R evolve_branch`: add `--pcomp`; an fs indel followed
-by an opposite-sign fs indel 3–15 nt downstream on the same branch;
-record `pair_id` in events + per-row "carries internal fs" flag.
-Also emit `tag.tree.nwk` (needed by R2). Unblocks evaluation of R4–R6.
+**R1 DONE.** `simulate_codon.R` gained `--pcomp` (compensated fs pairs,
+opposite sign 3–15 nt apart, net ≡0 mod3, shared `pair_id`), `--pterm`
+(3' terminal trims = terminal partials, NOT events), `*.rowtruth.tsv`
+(per-tip internal_fs/compensated/term_trim) and `*.tree.nwk`.
 
-**R2. Guide-tree input + true-tree diagnostic arm. [S–M, shim]**
-`msa_align_with_tree` is vendored but unexported. New shim
-`msa_run_tree_cpp(seqs, mode, gc, merges...)` + R-side ape::phylo →
-`genomsa::Tree` conversion; thread `guide_tree = NULL` through
-`msa_align()`/`msa_codon()`. Diagnostic: axis-A SPS with true tree —
-if SPS_true ≈ SPS_NJ, the residual gap is scoring/gap-model, not
-ordering. Also enables FFT-NS-2-style two-pass guides.
+**R2 DONE. Answer: the guide tree is NOT the bottleneck.** `guide_tree=`
+threads a phylo through `msa_align`/`msa_codon` (all backbones;
+`msa_tree_cpp` shim + `phylo_to_merges`). True tree vs NJ over the
+4-config grid: mean ΔSPS −0.003…+0.006, wins 13/24, loses 7 — noise.
+The residual gap vs MAFFT is scoring/gap-model, not ordering.
 
-**R3. Sum-of-pairs scorer shim. [S, shim]**
-Export `genomsa::msa_sp_score` via `msa_sp_score_cpp(rows, mode, gc)`
-(tokenize mult-3 grids via `cr_token3`; score `cofs` codon columns on
-refined outputs). Enables `select = "sp"` model selection if
-model-SP tracks true SPS — measure that first.
+**R3 DONE.** `msa_sp_score(x, mode)` exported (`msa_sp_score_cpp`;
+codon mode tokenizes triplets via `cr_token3`, refuses non-mult-3
+grids — subset `cofs` columns for refined MSAs). Model-SP vs true-SPS
+rank agreement on NJ-vs-tree pairs: 0.917 — usable as a diagnostic,
+not yet reliable enough alone for `select="sp"`.
+
+**Flag audit (drives R4):** with only terminal trims (cfg C) the
+`len%%3` flag false-fires on 11–17 rows/dataset — the real-data
+confound reproduced in silico. With compensated pairs (cfg B) flag
+recall for internal-fs rows is 0.11–0.64 — the invisible pairs are
+quantified. Both failure modes live in `bench/out/diag_phase0.tsv`.
 
 ## Phase 1 — the frameshift regime (largest gap)
 

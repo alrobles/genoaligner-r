@@ -1,0 +1,15 @@
+n_taxa	30
+n_codons	200
+divergence	0.1
+indel_rate	0.02
+p_fs	0.2
+p_comp	0.5
+p_term	0.4
+rep	3
+seed	1003
+true_width	636
+n_events	25
+n_fs_events	14
+n_comp_events	14
+n_tips_internal_fs	4
+n_tips_term_trim	10

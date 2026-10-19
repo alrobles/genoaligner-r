@@ -1,0 +1,12 @@
+tip	k_anchor	true_col	type	len	fs	pair_id
+1	337	349	del	3	FALSE	0
+2	337	349	del	3	FALSE	0
+13	585	606	del	6	FALSE	0
+14	585	606	del	6	FALSE	0
+15	585	606	del	6	FALSE	0
+16	594	606	del	6	FALSE	0
+16	348	360	ins	9	FALSE	0
+17	594	606	del	6	FALSE	0
+17	348	360	ins	9	FALSE	0
+18	585	606	del	6	FALSE	0
+24	180	180	ins	12	FALSE	0

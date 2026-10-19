@@ -1,5 +1,20 @@
 # genoaligner 2.0.0.9000 (development)
 
+* `msa_align()` and `msa_codon()` gain `guide_tree`: supply an
+  `ape::phylo` to drive the progressive merges with a caller-chosen
+  topology (branch lengths ignored; tip labels must match the sequence
+  names). Diagnostic arm for separating guide-tree error from scoring
+  error — benchmarks show NJ-vs-true-tree SPS differences are noise
+  (`bench/diag_phase0.R`).
+* `msa_sp_score(x, mode)` exported: the sum-of-pairs objective the
+  engine's iterative refinement maximizes, for diagnostics. Codon mode
+  takes a pure triplet grid (subset `cofs` codon columns for refined
+  alignments).
+* `bench/simulate_codon.R` gains `--pcomp` (compensated frameshift
+  pairs: opposite-sign fs indels 3–15 nt apart, net ≡0 mod 3 — the
+  case `len%%3` flagging cannot see) and `--pterm` (3' terminal trims,
+  the ragged-CDS confound), and now emits `*.rowtruth.tsv` (per-tip
+  internal-fs/compensated/trim truth) and `*.tree.nwk`.
 * `msa_codon()` gains `backbone = "protein"`: translate each sequence in
   frame 0, build the alignment backbone at amino-acid level with the same
   progressive engine (`msa_align(mode = "protein")`), then back-project

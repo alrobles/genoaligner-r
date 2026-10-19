@@ -9,6 +9,7 @@ msa_align(
   names = NULL,
   mode = c("dna", "protein"),
   guide = "nj",
+  guide_tree = NULL,
   iter_refine = 0L,
   fft_band = 0L,
   fft_lags = 4L,
@@ -28,6 +29,13 @@ row names of the aligned matrix and FASTA output.}
 
 \item{guide}{Guide-tree construction; only \code{"nj"} (deterministic
 neighbor joining) exists today.}
+
+\item{guide_tree}{Optional \code{ape::phylo} guide tree overriding
+\code{guide}: the progressive merges follow its topology (branch
+lengths are ignored). Must be fully bifurcating with
+\code{tip.label} matching the sequence names. Diagnostic arm for
+benchmarking — e.g. pass the simulation's true tree to separate
+guide-tree error from scoring error.}
 
 \item{iter_refine}{Integer \eqn{\ge 0}; iterative-refinement rounds over
 the guide-tree bipartitions (MAFFT \code{FFT-NS-i} class): every tree

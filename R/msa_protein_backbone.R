@@ -73,11 +73,13 @@ codon_backproject <- function(pm, trs) {
 
 # The protein-backbone path of msa_codon(): returns a C++-shaped result
 # list (status/aligned/frame/stops/partial) for new_msa_result().
-msa_codon_protein <- function(seqs, gc, refine, fft) {
+msa_codon_protein <- function(seqs, gc, refine, fft, guide_tree = NULL,
+                              names = NULL) {
     tab <- if (gc == 2L) .codon_table$gc2 else .codon_table$gc1
     trs <- lapply(seqs, codon_tr_frame, tab)
     aa <- vapply(trs, `[[`, "", "aa")
-    pa <- msa_align(unname(aa), mode = "protein",
+    pa <- msa_align(unname(aa), names = names, mode = "protein",
+                    guide_tree = guide_tree,
                     iter_refine = fft$iter, fft_band = fft$band,
                     fft_lags = fft$lags, fft_min_rel = fft$min_rel)
     pm <- as.matrix(pa)
