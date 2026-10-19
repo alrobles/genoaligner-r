@@ -1,33 +1,40 @@
 ---
 title: "genoaligner: protein-guided codon-aware multiple sequence alignment at phylogenomic scale"
-author: "Angel L. Robles-Fernandez"
-date: "draft — axis A+B results complete"
-output: pdf_document
+author: "Angel L. Robles-Fernandez¹* (¹ affiliation TBD; * corresponding, email TBD)"
+date: "BMC Bioinformatics — Software article draft"
 ---
 
 # Abstract
 
-Multiple sequence alignment (MSA) of protein-coding sequences underpins
-comparative genomics, yet the tools that preserve the reading frame —
-notably MACSE — are too slow for phylogenomic-scale datasets, while fast
-nucleotide aligners break the frame. We present **genoaligner**, a
-portable C++17 alignment engine (R package on CRAN) whose codon-aware MSA
-builds the alignment backbone at amino-acid level and back-projects to a
-codon grid, guaranteeing whole-codon indels. On simulated data with known
-ground truth, the protein-backbone mode reaches sum-of-pairs accuracy
-0.994/0.957 at nucleotide divergence 0.1/0.3 — third overall behind MAFFT
-and DECIPHER, ahead of MACSE — at ~0.3 s per 50-sequence dataset. A
-selective frameshift-refinement pass (`refine = "auto"`) recovers
-frameshift events only in sequences that provably cannot be in-frame
-(length not a multiple of 3), leaving clean coding output bit-identical
-to the un-refined backbone. On the 31 classic mammalian loci (Upham et
-al. 2019), `msa_codon` aligns each locus in a median 0.56 s with codon
-phase purity 1.0 — a median **325× speedup over MACSE** (range
-156–1046×), which produces identical phase purity in a median 171 s and
-exceeds one hour on single 50-sequence loci. At full scale (up to 3,559
-sequences) `msa_codon` completes all 31 loci in 7.2 min total.
+**Background.** Multiple sequence alignment (MSA) of protein-coding DNA
+underpins comparative genomics, yet the aligners that preserve the
+coding reading frame — exemplified by MACSE — are too slow for
+phylogenomic datasets, while fast nucleotide aligners scatter indels
+across codon boundaries and corrupt the frame.
 
-# 1. Introduction
+**Results.** We present genoaligner, a portable C++17 alignment engine
+distributed as a CRAN R package. Its codon-aware MSA translates each
+sequence, aligns a protein-guided backbone, and back-projects residues
+to a strict codon grid, guaranteeing whole-codon indels; a selective
+stage-2 pass repairs frameshifts only in sequences that provably
+cannot be in-frame. On simulated CDS with known truth, the protein
+backbone reaches sum-of-pairs accuracy 0.994/0.957 at nucleotide
+divergence 0.1/0.3 — third overall behind MAFFT and DECIPHER, ahead of
+MACSE — at ~0.3 s per 50-sequence dataset. On the 31 classic mammalian
+marker loci it runs in a median 0.56 s/locus with codon phase purity
+1.0 — a median 325× speedup over MACSE (which matches the phase purity
+but exceeded 1 h on single 50-sequence loci and failed on one) — and it
+aligned the full 19,336-sequence set in 7.2 min.
+
+**Conclusions.** genoaligner is the only frame-preserving codon
+aligner that is simultaneously fast, tolerant of partial coding
+sequences, and feasible at thousands-of-sequences scale; MACSE remains
+the reference for dense-frameshift niches.
+
+**Keywords:** multiple sequence alignment; codon alignment;
+frameshift; reading frame; phylogenomics; R package; C++17
+
+# Background
 
 Protein-coding DNA alignment is a special case of MSA: biologically
 meaningful insertions and deletions in coding sequence are (mostly)
@@ -39,10 +46,12 @@ in pseudogenes and error-prone reads — but its profile Hidden Markov
 Model machinery makes it orders of magnitude slower than standard
 aligners and effectively unusable at the thousands-of-sequences scale
 of current phylogenomics. Faster translation-guided tools
-(e.g. DECIPHER's `AlignTranslation`) compromise the frame.
+(e.g. DECIPHER's `AlignTranslation`) compromise the frame, and
+codon-model aligners such as PRANK require strictly in-frame input that
+real datasets rarely provide.
 
 genoaligner takes the opposite route: a single portable C++17
-progressive-MSA engine that is verified bit-exact against a GPU
+progressive-MSA engine, verified bit-exact against a GPU
 implementation in the sibling repository, exposing DNA, protein, and
 codon-aware modes through one API. Version 2.x adds two complementary
 codon strategies — the original codon-token progressive DP, and a
@@ -51,17 +60,17 @@ aligns amino acids with the same engine, and back-projects each residue
 to its codon — plus a selective stage-2 pass that repairs reading
 frames only where the data demonstrably require it.
 
-# 2. Methods
+# Implementation
 
-## 2.1 Codon-aware alignment modes
+## Codon-aware alignment modes
 
 `msa_codon(seqs, gc, backbone, refine)`:
 
 * **`backbone = "codon"` (default).** Sequences are tokenized to codons
   under NCBI genetic code `gc` (1 = standard, 2 = vertebrate
   mitochondrial) and aligned over a codon substitution matrix
-  (BLOSUM62-derived amino-acid scores + per-identical-nucleotide bonus +
-  stop penalty). Every indel is a whole codon by construction.
+  (BLOSUM62-derived amino-acid scores + per-identical-nucleotide bonus
+  + stop penalty). Every indel is a whole codon by construction.
 * **`backbone = "protein"` (new).** Each sequence is translated in
   frame 0 (stops/ambiguous codons → X), the amino-acid set is aligned
   with the same progressive engine (`mode = "protein"`), and each
@@ -71,7 +80,7 @@ frames only where the data demonstrably require it.
   accuracy. Trailing partial codons are kept as end insertion columns
   and reported in `qc$partial`.
 
-## 2.2 Selective frameshift refinement
+## Selective frameshift refinement
 
 A global stage-2 pass (`refine = TRUE`) reintroduces 1–2 nt frameshift
 event columns via a per-row phase DP, but it also fires spuriously on
@@ -87,7 +96,7 @@ verbatim (an identity `Place`), so:
   stop-codon counts, which fire on every row at high divergence —
   evaluated and rejected).
 
-## 2.3 Benchmark datasets and design
+## Benchmark datasets and design
 
 Two axes, reported separately because they measure different things:
 axis A measures **accuracy against known truth**, axis B measures
@@ -133,14 +142,14 @@ per locus (`bench/data/genes_final/`).
 * **Sizes.** 19,336 sequences total; 140–3,559 per locus (median
   386); lengths 200–82,292 bp (the max is a single outlier record in
   BRCA1 — real-data messiness, retained). Per-locus statistics in
-  Table S1 (`paper/supp_loci.tsv`).
+  Table S1 (`supp_loci.tsv`).
 * **Genetic codes.** COI, CYTB, ND1, ND2 aligned under NCBI code 2
   (vertebrate mitochondrial); the remaining 27 under code 1.
 * **Messiness is the point.** *Every* locus contains sequences whose
   length is not a multiple of 3 (median 51% of sequences per locus) —
   partial CDS and trimming artifacts are the rule in real data, not
   the exception. This single property already disqualifies
-  PRANK-codon, which requires all-mult-3 input (§3.2).
+  PRANK-codon, which requires all-mult-3 input (see Results).
 * **Head-to-head tier.** A fixed uniform subsample of n = 50/locus
   (seed 42, written to `out/subsets/*.in.fa`) shared verbatim by all
   tools, so runtimes and structural metrics are directly comparable.
@@ -170,7 +179,9 @@ without selective refinement, `msa_align`), MACSE v2.07, DECIPHER
 (`AlignTranslation`, `AlignSeqs`), MAFFT 7.525 (`--auto`), PRANK
 v.250331 (`-codon -once`).
 
-## 2.4 Positioning
+# Results and Discussion
+
+## Positioning
 
 **Table 1.** Feature comparison. Median values from the 31-locus
 head-to-head (n = 50 sequences/locus); SPS from axis A (n = 50,
@@ -200,9 +211,7 @@ genoaligner is the only entry combining strict frame preservation
 sub-second-per-locus throughput — and the only frame-preserving tool
 feasible at phylogenomic scale.
 
-# 3. Results
-
-## 3.1 Axis A — accuracy vs ground truth (n = 50, mean of 5 replicates)
+## Axis A — accuracy vs ground truth (n = 50, mean of 5 replicates)
 
 | tool | d=0.1 pfs=0 | d=0.3 pfs=0 | d=0.1 pfs=0.2 (fsR) | d=0.3 pfs=0.2 (fsR) | t/data |
 |---|---|---|---|---|---|
@@ -238,7 +247,7 @@ Key findings:
 * Global refine should stay opt-in: it costs 0.01–0.08 SPS on clean
   data for fs-recall gains that "auto" already captures ~80% of.
 
-## 3.2 Axis B — real loci, n = 50 head-to-head
+## Axis B — real loci, n = 50 head-to-head
 
 | tool | median t/locus | total (31 loci) | phase purity | % indels mult-3 |
 |---|---|---|---|---|
@@ -271,7 +280,7 @@ two orders of magnitude below MACSE while matching its phase purity
 exactly; every non-codon-aware tool — including fast ones — scatters
 phase across the loci.
 
-## 3.3 Axis B — full-scale (all sequences per locus)
+## Axis B — full-scale (all sequences per locus)
 
 `msa_codon` aligned the complete 31-locus set (up to **3,559
 sequences**, CYTB) in **430 s total** (median 4.7 s/locus), codon phase
@@ -281,15 +290,7 @@ scale (extrapolating its n=50 timings) — reported honestly as a
 feasibility result: for thousands-of-sequences codon-aware MSA,
 genoaligner is currently the only practical option.
 
-# 4. Discussion
-
-**What we claim.** genoaligner is the fast, frame-preserving codon MSA
-for the common case — clean or near-clean coding sequences at
-phylogenomic scale. The protein backbone delivers accuracy competitive
-with protein-guided aligners while outputting a strict codon grid;
-`refine = "auto"` adds frameshift recovery at zero cost to clean data.
-
-**Honest limitations.**
+## Limitations
 
 * For *dense* frameshifts (pseudogene-rich samples), MACSE's recall
   (0.74 vs our 0.31 at d=0.1) remains the reference — it is the right
@@ -303,28 +304,80 @@ with protein-guided aligners while outputting a strict codon grid;
   MAFFT does not provide.
 * PRANK-codon underperformed throughout (SPS 0.20–0.34) at our
   divergence settings — reported rather than excluded.
+* The simulation models frameshifts as single non-mult-3 indels;
+  deliberately compensated pairs are not yet modeled.
 
-**Reproducibility.** All simulation is seeded and scripted
-(`bench/simulate_codon.R`, `bench/bench_sim.R`); results tables are
-generated by `bench/summarize.R`. Benchmark data and tool binaries are
-external, documented in `bench/README.md` and `bench/PLAN_BENCH.md`.
+# Conclusions
 
-# Availability
+genoaligner delivers frame-preserving codon-aware MSA at speeds that
+make phylogenomic-scale use routine: a median 0.56 s for 50-sequence
+loci, minutes for 3,500-sequence loci, with codon phase purity 1.0 —
+325× faster than MACSE at identical structural correctness, and ~19×
+faster than MAFFT while preserving a frame MAFFT does not. The
+protein-guided backbone reaches accuracy competitive with the best
+general aligners on clean CDS, and selective frameshift refinement
+recovers real frameshifts without penalizing clean data. For dense
+pseudogene-grade frameshifting MACSE remains the accuracy reference;
+for everything else, genoaligner removes the speed/frame trade-off.
 
-CRAN package `genoaligner` (R/C++17, MIT). Source:
-https://github.com/alrobles/genoaligner-r — documentation
-https://alrobles.github.io/genoaligner-r/
+# Availability and Requirements
 
-# Disclosure
+* **Project name:** genoaligner
+* **Project home page:** https://github.com/alrobles/genoaligner-r
+  (CRAN package `genoaligner`; documentation
+  https://alrobles.github.io/genoaligner-r/)
+* **Operating system(s):** platform-independent (Linux, macOS,
+  Windows)
+* **Programming language:** C++17 (engine), R (package)
+* **Other requirements:** R ≥ 4.1.0, Rcpp; optional DECIPHER/ape for
+  vignettes
+* **License:** MIT
+* **Any restrictions to use by non-academics:** none
 
-Software development was assisted by an AI coding agent (Devin,
-Cognition AI) under the direction of the authors. All benchmark design
-decisions, analyses, and conclusions are the authors'.
+# Abbreviations
 
-# References (draft)
+CDS, coding sequence; DP, dynamic programming; MSA, multiple sequence
+alignment; nt, nucleotide(s); SPS, sum-of-pairs score; TC, total
+column score; fs, frameshift.
 
-* Ranwez V et al. 2011. MACSE. PLOS ONE / MBE 2018 (v2).
-* Upham NS et al. 2019. Inferring the mammal tree. PLOS Biology.
-* Katoh K, Standley DM. MAFFT.
-* Wright ES. DECIPHER. BMC Bioinformatics.
-* Löytynoja A. PRANK.
+# Declarations
+
+**Ethics approval and consent to participate.** Not applicable.
+
+**Consent for publication.** Not applicable.
+
+**Availability of data and materials.** Simulation inputs, ground-truth
+alignments, event tables, benchmark drivers, and the figure-generation
+script are in the repository under `bench/` (seeded; see
+`bench/README.md`, `bench/PLAN_BENCH.md`). The 31 real-locus FASTAs are
+redistributed under `bench/data/genes_final/`; per-locus statistics in
+`paper/supp_loci.tsv`.
+
+**Competing interests.** The author declares none.
+
+**Funding.** TBD.
+
+**Authors' contributions.** ALRF designed the study, directed the
+software development, analyzed results, and wrote the manuscript.
+
+**Acknowledgements.** TBD.
+
+**Use of AI tools.** Software development was assisted by an AI coding
+agent (Devin, Cognition AI) under the direction of the author,
+consistent with the journal's AI policy; all design decisions,
+analyses, and conclusions are the author's.
+
+# References (draft — to be completed)
+
+* Ranwez V et al. 2011. MACSE: Multiple Alignment of Coding SEquences
+  accounting for frameshifts and stop codons. PLOS ONE.
+* Ranwez V et al. 2018. MACSE v2. Molecular Biology and Evolution.
+* Upham NS, Esselstyn JA, Jetz W. 2019. Inferring the mammal tree:
+  species-level sets of phylogenies for questions in ecology,
+  evolution, and conservation. PLOS Biology.
+* Katoh K, Standley DM. 2013. MAFFT multiple sequence alignment
+  software version 7. Molecular Biology and Evolution.
+* Wright ES. 2015. DECIPHER: harnessing local sequence context to
+  improve protein multiple sequence alignment. BMC Bioinformatics.
+* Löytynoja A. 2014. Phylogeny-aware alignment with PRANK. Methods
+  in Molecular Biology.
