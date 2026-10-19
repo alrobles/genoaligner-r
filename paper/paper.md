@@ -109,6 +109,36 @@ Metrics: runtime, % indel runs multiple of 3, codon phase purity
 Tools: genoaligner modes, MACSE v2.07, DECIPHER (`AlignTranslation`,
 `AlignSeqs`), MAFFT 7.525, PRANK-codon.
 
+## 2.4 Positioning
+
+**Table 1.** Feature comparison. Median values from the 31-locus
+head-to-head (n = 50 sequences/locus); SPS from axis A (n = 50,
+mean of 5 replicates).
+
+| | genoaligner `msa_codon` | MACSE | MAFFT | PRANK-codon | DECIPHER-transl. | DECIPHER-seqs |
+|---|---|---|---|---|---|---|
+| Backbone strategy | protein-guided → codon grid | nt DP + codon-aware costs | nt (FFT-guided) | codon substitution model | protein-guided → nt | nt |
+| Whole-codon indels | always, by construction | yes (+ fs events) | no | no | mostly | no |
+| Phase purity (real loci, median) | **1.000** | 1.000 | 0.157 | — † | 0.487 | 0.208 |
+| Explicit frameshift events | selective (`refine="auto"`) | yes | no | — | no | no |
+| Accepts non-mult-3 CDS input | yes | yes | yes | **no** † | yes | yes |
+| SPS, clean CDS (d = 0.1 / 0.3) | **0.994 / 0.957** | 0.983 / 0.804 | 0.999 / 0.988 | 0.344 / 0.196 | 0.995 / 0.949 | 0.997 / 0.977 |
+| SPS, frameshifted (d = 0.1 / 0.3) | 0.831 / 0.525 | **0.982 / 0.722** | 0.998 / 0.989 | fails | 0.799 / 0.535 | 0.997 / 0.973 |
+| Median time/locus (s) | **0.56** | 171.4 | 8.6 | — † | 0.57 | 1.18 |
+| Feasible at n ≈ 3,500 | **yes** | no ‡ | yes | — | yes | yes |
+| Interface | R pkg + C++17 lib | Java CLI | CLI | CLI | R pkg | R pkg |
+
+† PRANK-codon refused every one of the 31 real loci: it requires all
+input lengths to be multiples of 3, which fails on real CDS containing
+partial codons — a robustness result in itself.
+‡ MACSE exceeded 1 h on single n = 50 loci; extrapolation to thousands
+of sequences is infeasible.
+
+genoaligner is the only entry combining strict frame preservation
+(phase purity 1.000, whole-codon indels), frameshift tolerance, and
+sub-second-per-locus throughput — and the only frame-preserving tool
+feasible at phylogenomic scale.
+
 # 3. Results
 
 ## 3.1 Axis A — accuracy vs ground truth (n = 50, mean of 5 replicates)
@@ -144,18 +174,27 @@ Key findings:
 | tool | median t/locus | total (31 loci) | phase purity | % indels mult-3 |
 |---|---|---|---|---|
 | **msa_codon** | **0.56 s** | **45 s** | **1.000** | **1.000** |
-| msa_align | 1.31 s | 122 s | 0.282 | 0.146 |
-| macse | 171.4 s | 4.4 h | 1.000 | 1.000 |
 | decipher_translation | 0.57 s | 39 s | 0.487 | 0.894 |
 | decipher_seqs | 1.18 s | 124 s | 0.208 | 0.605 |
+| msa_align | 1.31 s | 122 s | 0.282 | 0.146 |
+| mafft | 8.61 s | 349 s | 0.157 | 0.685 |
+| macse | 171.4 s | 4.4 h | 1.000 | 1.000 |
+| prank | fails all 31 loci † | — | — | — |
 
-* Per-locus **MACSE / msa_codon ratio: median 325×** (range 156–1046×).
-  MACSE exceeded 1 h on single loci (BRCA2 7,048 s; ENAM 1,787 s; TTN
+* Per-locus **MACSE / msa_codon ratio: median 325×** (range 156–1046×)
+  and **MAFFT / msa_codon: median 18.8×** (1.5–34.8×) — while MAFFT
+  leaves a median phase purity of only 0.157.
+* MACSE exceeded 1 h on single loci (BRCA2 7,048 s; ENAM 1,787 s; TTN
   1,640 s) and failed to complete on BRCA1.
 * msa_codon and MACSE both deliver phase purity 1.000 where MACSE
   converges — the difference is throughput, not frame correctness.
 * DECIPHER's translation guide is fast but loses the frame (phase
-  purity 0.21–0.49).
+  purity 0.21–0.49); even its AA-guided mode emits non-codon indels
+  on real data.
+* † PRANK-codon requires every input length to be a multiple of 3 and
+  refused all 31 real loci — it also failed on every frameshifted
+  simulation dataset (axis A). Real-world CDS routinely contains
+  partial codons; the tool cannot process them.
 
 ## 3.3 Axis B — full-scale (all sequences per locus)
 
