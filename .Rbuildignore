@@ -8,6 +8,7 @@
 ^\.Rcheck$
 ^CRAN-SUBMISSION$
 ^bench$
+^paper$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
