@@ -26,15 +26,23 @@
   Nucleotides outside complete codons (trailing partial codons) are kept
   as end insertion columns and counted in `qc$partial`; `refine = TRUE`
   runs the stage-2 codon refinement on the back-projected grid.
-* `msa_codon(refine = "auto")` — selective stage-2 refinement: only
-  sequences whose length is not a multiple of 3 may emit frameshift
-  event columns (`codon_refine_sel_cpp` runs the per-row phase DP on
-  flagged rows against the full profile; every other row contributes
-  its backbone placement verbatim). In-frame input is returned exactly
-  as the un-refined backbone, so "auto" cannot degrade clean CDS —
-  on simulated frameshift data it improves SPS over the un-refined
-  path and recovers frameshift events (mean fs_recall ≈ 0.3–0.5 on
-  the protein backbone, ≈ 0.1 on the codon backbone).
+* `msa_codon(refine = "auto")` — selective stage-2 refinement with a
+  guided-evidence flag: each row is re-tokenized by a codon-tiling DP
+  boosted by leave-one-out nucleotide agreement against the pass-1
+  backbone; rows whose tiling leaves internal held-out blocks (codon
+  blocks on both sides) are re-placed, everything else keeps its
+  backbone placement verbatim. Terminal partial codons never fire the
+  flag — on the 31 real ragged loci "auto" stays phase-neutral
+  (median 1.000 at n=50, previously ~0.52 under a `nchar%%3` flag that
+  mistook terminal partials for internal frameshifts) — while
+  internally compensated indel pairs (net length multiple of 3,
+  invisible to `nchar%%3`) can now be detected. Internal machinery: `guide_bonus_cpp`
+  (LOO guide bonus), `codon_encode_blocks_cpp` (block provenance with
+  `fs_enc` override, parity-checked against the vendored
+  `codon_encode_guided`), and `codon_refine_sel_cpp` gains an `fs`
+  event-cost override (`auto` uses 120 so spurious flags cannot emit
+  event columns on clean data). Also fixes unflagged rows losing
+  residues that lived in insertion columns.
 
 # genoaligner 2.0.0
 

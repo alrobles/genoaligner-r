@@ -217,6 +217,192 @@ Rcpp::List msa_tree_cpp(const std::vector<std::string>& seqs,
         Rcpp::_["partial"] = partial);
 }
 
+// ---- R4: guided re-tokenization flag ----------------------------------
+// Port of the --guide-aln bonus construction from genoaligner-devel's
+// tools/genomsa.cpp: per-column nt frequencies over non-gap rows; raw
+// nt r of seq s maps to the column where its own row carries the r-th
+// non-gap char, and bonus[r] = leave-one-out frequency - 0.5. Rows whose
+// pass-1 representation under-covers the sequence (e.g. strict-encode
+// lead drops) get an all-zero guide -- same "empty guide" semantics the
+// vendored codon_encode_guided expects.
+// [[Rcpp::export]]
+Rcpp::List guide_bonus_cpp(const std::vector<std::string>& seqs,
+                           const std::vector<std::string>& aln)
+{
+    const int W = aln.empty() ? 0 : (int)aln[0].size();
+    const int n = (int)aln.size();
+    std::vector<std::array<int,4>> cnt(W);
+    std::vector<int> ngap(W, 0);
+    for (const auto& row : aln)
+        for (int c = 0; c < W && c < (int)row.size(); ++c) {
+            int b = genoaligner::cr_nt4(row[c]);
+            if (b >= 0) { ++cnt[c][b]; ++ngap[c]; }
+        }
+    Rcpp::List out(n);
+    for (int s = 0; s < n; ++s) {
+        const std::string& row = aln[s], &q = seqs[s];
+        Rcpp::NumericVector b(q.size(), 0.0);
+        int r = 0;
+        for (int c = 0; c < W && c < (int)row.size() && r < (int)q.size();
+             ++c) {
+            if (row[c] == '-') continue;
+            int b4 = genoaligner::cr_nt4(q[r]);
+            if (b4 >= 0 && ngap[c] > 1) {
+                float f = (float)(cnt[c][b4]
+                        - (genoaligner::cr_nt4(row[c]) == b4 ? 1 : 0))
+                        / (float)(ngap[c] - 1);
+                b[r] = f - 0.5f;
+            }
+            ++r;
+        }
+        if (r == (int)q.size()) out[s] = b; else out[s] = Rcpp::NumericVector(0);
+    }
+    return out;
+}
+
+// Encode-DP replica emitting block provenance. The vendored
+// codon_encode_guided already produces the token stream + qc (used here
+// for parity checking); what it does NOT expose is WHERE the held-out
+// frameshift/partial blocks sit, which is what the flag needs: internal
+// fs blocks (codon blocks on both sides) are real frameshift evidence,
+// while lead/trail blocks are the ragged-CDS terminal partials that the
+// len%%3 flag wrongly counts. Tables mirror the vendored static ones
+// (msa_ref.cpp) -- the parity test pins equivalence.
+namespace {
+const signed char SHIM_AA_STD[64] = {
+    13,13,10,10, 15,15,15,15, 18,18,-1,-1,  4, 4,-1,17,
+    10,10,10,10, 14,14,14,14,  8, 8, 5, 5,  1, 1, 1, 1,
+     9, 9, 9,12, 16,16,16,16,  2, 2,11,11, 15,15, 1, 1,
+    19,19,19,19,  0, 0, 0, 0,  3, 3, 6, 6,  7, 7, 7, 7};
+const signed char SHIM_AA_MT[64] = {
+    13,13,10,10, 15,15,15,15, 18,18,-1,-1,  4, 4,17,17,
+    10,10,10,10, 14,14,14,14,  8, 8, 5, 5,  1, 1, 1, 1,
+     9, 9,12,12, 16,16,16,16,  2, 2,11,11, 15,15,-1,-1,
+    19,19,19,19,  0, 0, 0, 0,  3, 3, 6, 6,  7, 7, 7, 7};
+}  // namespace
+
+// [[Rcpp::export]]
+Rcpp::List codon_encode_blocks_cpp(const std::vector<std::string>& seqs,
+                                   int gc_def, double guide_w,
+                                   const Rcpp::List& guide,
+                                   double fs_enc = -1.0)
+{
+    const signed char* aa = gc_def == 2 ? SHIM_AA_MT : SHIM_AA_STD;
+    const float NEG = -1e30f;
+    genomsa::Params P = genomsa::codon_params(gc_def);
+    const float fs_term = P.codon_fs_term,
+                fs_cost = fs_enc >= 0 ? (float)fs_enc : P.codon_fs_enc,
+                stop_pen = P.codon_stop_pen;
+    const int n = (int)seqs.size();
+    std::vector<std::vector<float>> gvec(n);
+    for (int s = 0; s < n; ++s)
+        if (s < guide.size())
+            gvec[s] = Rcpp::as<std::vector<float>>(guide[s]);
+    // Authoritative tokenization for parity assertions — only when the
+    // DP parameters are the vendored defaults (fs_enc<0 keeps
+    // P.codon_fs_enc); an override intentionally changes the tiling.
+    std::vector<genomsa::CodonQc> qc;
+    if (fs_enc < 0) {
+        P.guide_w = (float)guide_w;
+        (void)genomsa::codon_encode_guided(seqs, P, gvec, &qc);
+    }
+
+    Rcpp::IntegerVector n_fs(n), fs_nt(n), lead_nt(n), trail_nt(n),
+        n_codons(n), vend_partial(n), parity(n);
+    Rcpp::List fs_start(n), fs_len(n);
+    for (int s = 0; s < n; ++s) {
+        const std::string& q = seqs[s];
+        const int L = (int)q.size();
+        fs_start[s] = Rcpp::IntegerVector(0);
+        fs_len[s]   = Rcpp::IntegerVector(0);
+        if (L < 3) { trail_nt[s] = L; continue; }
+        const std::vector<float>* g =
+            (s < (int)gvec.size() && (int)gvec[s].size() >= L)
+            ? &gvec[s] : nullptr;
+        auto fsc = [&](int pos) {
+            return (pos < 3 || pos > L - 3) ? fs_term : fs_cost; };
+        std::vector<float> dp(L + 1, NEG);
+        std::vector<uint8_t> tr(L + 1, 0);
+        dp[0] = dp[1] = dp[2] = 0.f;
+        for (int i = 3; i <= L; ++i) {
+            float bv = NEG; uint8_t bt = 0;
+            int a = genoaligner::cr_nt4(q[i-3]), b = genoaligner::cr_nt4(q[i-2]),
+                c = genoaligner::cr_nt4(q[i-1]);
+            float cs = (a < 0 || b < 0 || c < 0) ? 0.f
+                       : (aa[a*16 + b*4 + c] < 0 ? -stop_pen : 1.f);
+            if (g)
+                cs += P.guide_w * ((*g)[i-3] + (*g)[i-2] + (*g)[i-1]);
+            float pv = dp[i-3];
+            if (pv > NEG/2 && pv + cs > bv) { bv = pv + cs; bt = 1; }
+            for (int d = 1; d <= 2; ++d) {
+                pv = dp[i - d];
+                if (pv <= NEG/2) continue;
+                float cand = pv - fsc(i - d);
+                if (cand > bv) { bv = cand; bt = (uint8_t)(1 + d); }
+            }
+            dp[i] = bv; tr[i] = bt;
+        }
+        int ei = L; float eb = dp[L];
+        for (int r = 1; r <= 2; ++r)
+            if (dp[L-r] - fs_term > eb) { eb = dp[L-r] - fs_term; ei = L-r; }
+        std::vector<int> blocks;
+        int i = ei;
+        while (i > 0) {
+            uint8_t t = tr[i];
+            if (t == 0) break;
+            if (t == 1) { blocks.push_back(3); i -= 3; }
+            else        { int d = t - 1; blocks.push_back(-d); i -= d; }
+        }
+        if (ei < L) blocks.push_back(-(L - ei));
+        std::reverse(blocks.begin(), blocks.end());
+        // Internal fs block: a held-out block with a codon block on
+        // BOTH sides. Adjacent fs blocks can occur, so count codons,
+        // not just neighboring indices. Held blocks sitting at an edge
+        // (no codons on one side) are terminal raggedness: they extend
+        // lead_nt / trail_nt even though they live inside `blocks`.
+        const int nb = (int)blocks.size();
+        std::vector<int> cod_before(nb), cod_after(nb);
+        for (int k = 0, cb = 0; k < nb; ++k) {
+            cod_before[k] = cb; if (blocks[k] == 3) ++cb;
+        }
+        for (int k = nb - 1, ca = 0; k >= 0; --k) {
+            cod_after[k] = ca; if (blocks[k] == 3) ++ca;
+        }
+        std::vector<int> fsp, fsl;
+        int pos = i, held = 0;
+        lead_nt[s] = i;                       // leading drop (tr==0 break)
+        for (int k = 0; k < nb; ++k) {
+            int bl = blocks[k];
+            if (bl == 3) { ++n_codons[s]; pos += 3; continue; }
+            int d = -bl; ++held;
+            if (cod_before[k] > 0 && cod_after[k] > 0) {
+                ++n_fs[s]; fs_nt[s] += d;
+                fsp.push_back(pos); fsl.push_back(d);
+            } else if (cod_before[k] == 0) lead_nt[s] += d;
+            else                         trail_nt[s] += d;
+            pos += d;
+        }
+        fs_start[s] = Rcpp::wrap(fsp);
+        fs_len[s]   = Rcpp::wrap(fsl);
+        // vendored qc parity: its `partial` counts every held-out block
+        // (internal fs + edge fs + trailing); the leading drop is not a
+        // block there -- identical rule here.
+        vend_partial[s] = s < (int)qc.size() ? qc[s].partial : -1;
+        parity[s] = (vend_partial[s] < 0 || vend_partial[s] == held)
+                    ? 1 : 0;
+    }
+    return Rcpp::List::create(
+        Rcpp::_["n_fs"]         = n_fs,
+        Rcpp::_["fs_nt"]        = fs_nt,
+        Rcpp::_["lead_nt"]      = lead_nt,
+        Rcpp::_["trail_nt"]     = trail_nt,
+        Rcpp::_["n_codons"]     = n_codons,
+        Rcpp::_["fs_start"]     = fs_start,
+        Rcpp::_["fs_len"]       = fs_len,
+        Rcpp::_["vend_partial"] = vend_partial,
+        Rcpp::_["parity"]       = parity);
+}
+
 // Selective stage-2 refinement: the per-row phase DP only runs for rows
 // flagged true; every other row contributes its input placement verbatim
 // (its fills in the codon columns, no event columns). The profile still
@@ -260,15 +446,25 @@ genomsa::detail::Place sel_realign_row(
 }
 
 // Identity placement: the row's input fills at the current codon
-// offsets (cofs tracks real positions once event columns exist),
-// no insertions.
+// offsets (cofs tracks real positions once event columns exist).
+// Nucleotides living in insertion columns — between codon slots or at
+// the edges — are re-emitted as ins blocks at the same boundary so an
+// unflagged row never loses content.
 genomsa::detail::Place sel_identity_place(const std::string& row,
                                         const std::vector<int>& cofs) {
     genomsa::detail::Place pl;
     const int C = (int)cofs.size();
     pl.fill.assign(C, "---");
     pl.ins.assign(C + 1, {});
-    for (int j = 0; j < C; ++j) pl.fill[j] = row.substr(cofs[j], 3);
+    if (cofs[0] > 0)
+        pl.ins[0].push_back(row.substr(0, cofs[0]));
+    for (int j = 0; j < C; ++j) {
+        pl.fill[j] = row.substr(cofs[j], 3);
+        int next = j + 1 < C ? cofs[j + 1] : (int)row.size();
+        int end = cofs[j] + 3;
+        if (next > end)
+            pl.ins[j + 1].push_back(row.substr(end, next - end));
+    }
     return pl;
 }
 }  // namespace
@@ -277,10 +473,11 @@ genomsa::detail::Place sel_identity_place(const std::string& row,
 Rcpp::List codon_refine_sel_cpp(const std::vector<std::string>& seqs,
                                 const std::vector<std::string>& aln,
                                 const std::vector<bool>& flag,
-                                int gc_def, int rounds)
+                                int gc_def, int rounds, double fs = -1.0)
 {
     using namespace genomsa;
     Params P = codon_params(gc_def);
+    if (fs >= 0) P.codon_fs = (float)fs;
     std::vector<std::string> cur = aln;
     int C = (int)cur[0].size() / 3;
     std::vector<int> cofs(C);

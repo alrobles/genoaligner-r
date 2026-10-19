@@ -88,15 +88,10 @@ msa_codon_protein <- function(seqs, gc, refine, fft, guide_tree = NULL,
     if (identical(refine, TRUE)) {
         rows <- unname(codon_refine_cpp(unname(seqs), rows, gc, 1L))
     } else if (identical(refine, "auto")) {
-        # selective stage-2: only sequences whose length is not a
-        # multiple of 3 may produce frameshift event columns — the
-        # protein backbone cannot place them in-frame by construction.
-        # Clean-CDS rows keep the backbone verbatim, so "auto" never
-        # degrades in-frame input (flagging on stop count would fire
-        # on every row at high divergence).
-        flag <- nchar(seqs) %% 3L != 0L
+        flag <- auto_fs_flag(seqs, rows, gc)
         if (any(flag)) {
-            sel <- codon_refine_sel_cpp(unname(seqs), rows, flag, gc, 1L)
+            sel <- codon_refine_sel_cpp(unname(seqs), rows, flag, gc, 1L,
+                                        fs = 120)
             rows <- sel$aln
         }
     }
@@ -118,4 +113,18 @@ msa_codon_protein <- function(seqs, gc, refine, fft, guide_tree = NULL,
 
 str_pad_right <- function(x, w, pad = "-") {
     paste0(x, strrep(pad, pmax(0L, w - nchar(x))))
+}
+
+# refine="auto" flag: rows whose *internal* codon tiling leaves held-out
+# blocks under the guided re-tokenization (leave-one-out nt agreement
+# bonus from the pass-1 backbone; blocks with codons on both sides).
+# Terminal partial codons land in lead/trail blocks and never fire, so
+# "auto" stays phase-neutral on ragged real CDS — unlike the old
+# nchar%%3 flag, which flagged ~half the rows of the real loci for
+# terminal raggedness it could not fix. Internally compensated indel
+# pairs (net length mult-3) are caught here where nchar%%3 was blind.
+auto_fs_flag <- function(seqs, rows, gc) {
+    g <- guide_bonus_cpp(unname(seqs), rows)
+    eb <- codon_encode_blocks_cpp(unname(seqs), gc, guide_w = 40, g, 80)
+    eb$n_fs > 0L
 }

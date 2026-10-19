@@ -25,7 +25,15 @@ msa_tree_cpp <- function(seqs, mode, gc_def, codon_refine, local_frame, iter_ref
     .Call(`_genoaligner_msa_tree_cpp`, seqs, mode, gc_def, codon_refine, local_frame, iter_refine, fft_band, fft_lags, fft_min_rel, mleft, mright)
 }
 
-codon_refine_sel_cpp <- function(seqs, aln, flag, gc_def, rounds) {
-    .Call(`_genoaligner_codon_refine_sel_cpp`, seqs, aln, flag, gc_def, rounds)
+guide_bonus_cpp <- function(seqs, aln) {
+    .Call(`_genoaligner_guide_bonus_cpp`, seqs, aln)
+}
+
+codon_encode_blocks_cpp <- function(seqs, gc_def, guide_w, guide, fs_enc = -1.0) {
+    .Call(`_genoaligner_codon_encode_blocks_cpp`, seqs, gc_def, guide_w, guide, fs_enc)
+}
+
+codon_refine_sel_cpp <- function(seqs, aln, flag, gc_def, rounds, fs = -1.0) {
+    .Call(`_genoaligner_codon_refine_sel_cpp`, seqs, aln, flag, gc_def, rounds, fs)
 }
 

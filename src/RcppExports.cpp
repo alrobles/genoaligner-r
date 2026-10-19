@@ -108,9 +108,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// guide_bonus_cpp
+Rcpp::List guide_bonus_cpp(const std::vector<std::string>& seqs, const std::vector<std::string>& aln);
+RcppExport SEXP _genoaligner_guide_bonus_cpp(SEXP seqsSEXP, SEXP alnSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type aln(alnSEXP);
+    rcpp_result_gen = Rcpp::wrap(guide_bonus_cpp(seqs, aln));
+    return rcpp_result_gen;
+END_RCPP
+}
+// codon_encode_blocks_cpp
+Rcpp::List codon_encode_blocks_cpp(const std::vector<std::string>& seqs, int gc_def, double guide_w, const Rcpp::List& guide, double fs_enc);
+RcppExport SEXP _genoaligner_codon_encode_blocks_cpp(SEXP seqsSEXP, SEXP gc_defSEXP, SEXP guide_wSEXP, SEXP guideSEXP, SEXP fs_encSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<std::string>& >::type seqs(seqsSEXP);
+    Rcpp::traits::input_parameter< int >::type gc_def(gc_defSEXP);
+    Rcpp::traits::input_parameter< double >::type guide_w(guide_wSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type guide(guideSEXP);
+    Rcpp::traits::input_parameter< double >::type fs_enc(fs_encSEXP);
+    rcpp_result_gen = Rcpp::wrap(codon_encode_blocks_cpp(seqs, gc_def, guide_w, guide, fs_enc));
+    return rcpp_result_gen;
+END_RCPP
+}
 // codon_refine_sel_cpp
-Rcpp::List codon_refine_sel_cpp(const std::vector<std::string>& seqs, const std::vector<std::string>& aln, const std::vector<bool>& flag, int gc_def, int rounds);
-RcppExport SEXP _genoaligner_codon_refine_sel_cpp(SEXP seqsSEXP, SEXP alnSEXP, SEXP flagSEXP, SEXP gc_defSEXP, SEXP roundsSEXP) {
+Rcpp::List codon_refine_sel_cpp(const std::vector<std::string>& seqs, const std::vector<std::string>& aln, const std::vector<bool>& flag, int gc_def, int rounds, double fs);
+RcppExport SEXP _genoaligner_codon_refine_sel_cpp(SEXP seqsSEXP, SEXP alnSEXP, SEXP flagSEXP, SEXP gc_defSEXP, SEXP roundsSEXP, SEXP fsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -119,7 +146,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<bool>& >::type flag(flagSEXP);
     Rcpp::traits::input_parameter< int >::type gc_def(gc_defSEXP);
     Rcpp::traits::input_parameter< int >::type rounds(roundsSEXP);
-    rcpp_result_gen = Rcpp::wrap(codon_refine_sel_cpp(seqs, aln, flag, gc_def, rounds));
+    Rcpp::traits::input_parameter< double >::type fs(fsSEXP);
+    rcpp_result_gen = Rcpp::wrap(codon_refine_sel_cpp(seqs, aln, flag, gc_def, rounds, fs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -131,7 +159,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_genoaligner_codon_refine_cpp", (DL_FUNC) &_genoaligner_codon_refine_cpp, 4},
     {"_genoaligner_msa_sp_score_cpp", (DL_FUNC) &_genoaligner_msa_sp_score_cpp, 3},
     {"_genoaligner_msa_tree_cpp", (DL_FUNC) &_genoaligner_msa_tree_cpp, 11},
-    {"_genoaligner_codon_refine_sel_cpp", (DL_FUNC) &_genoaligner_codon_refine_sel_cpp, 5},
+    {"_genoaligner_guide_bonus_cpp", (DL_FUNC) &_genoaligner_guide_bonus_cpp, 2},
+    {"_genoaligner_codon_encode_blocks_cpp", (DL_FUNC) &_genoaligner_codon_encode_blocks_cpp, 5},
+    {"_genoaligner_codon_refine_sel_cpp", (DL_FUNC) &_genoaligner_codon_refine_sel_cpp, 6},
     {NULL, NULL, 0}
 };
 

@@ -48,17 +48,45 @@ quantified. Both failure modes live in `bench/out/diag_phase0.tsv`.
 
 ## Phase 1 — the frameshift regime (largest gap)
 
-**R4. Guided re-tokenization flag. [M, shim on vendored machinery]**
-`codon_encode_guided` is vendored; build leave-one-out guide bonus
-from the pass-1 nt alignment (port the column-counting loop from
-`genoaligner-devel/tools/genomsa.cpp`); `qc.partial` then counts
-internal fs blocks + trailing block → `flag = fs_blocks >= 1 |
-nchar%%3!=0`. Separates internal fs from terminal partials — the flag
-is provably the binding constraint on compensated pairs (net
-len%%3==0 invisible today) AND on ragged real data (~52% flagged now,
-mostly terminal noise).
-Fallback diagnostic: sliding-window stop-cluster score (pure R, weak
-at d=0.3 but a useful QC cross-check).
+**R4. Guided re-tokenization flag. [DONE 2026-10-21, shim on vendored
+machinery]** Implemented as designed + two corrections the data forced:
+
+- `guide_bonus_cpp(seqs, aln)` ports the LOO guide bonus from
+  `genoaligner-devel/tools/genomsa.cpp` (per-column nt counts over
+  non-gap rows → per-position `freq_others − 0.5`).
+- `codon_encode_blocks_cpp(seqs, gc, guide_w, guide, fs_enc)` re-runs
+  the vendored encode DP and returns block provenance: `n_fs`/`fs_nt`
+  (internal held-out blocks with codons on BOTH sides — adjacency-safe),
+  `lead_nt`/`trail_nt` (terminal held-out nt, incl. edge blocks inside
+  the block list), `n_codons`, `fs_start`/`fs_len`, `vend_partial`,
+  `parity`. Parity vs `genomsa::codon_encode_guided`: 100% at default
+  params on all tested data; nucleotide accounting exact
+  (`lead + 3·cod + fs_nt + trail == L`).
+
+Data-driven corrections vs the original design:
+
+1. **Flag = `n_fs > 0` only, NOT `| len%%3!=0`.** On the three ragged
+   real loci spot-checked the encode flag fires on ~0–1 rows (real
+   raggedness is terminal → lands in lead/trail blocks), so auto stays
+   phase-neutral on real CDS. `len%%3` stays out of the flag: it
+   conflates exactly the terminal-partial rows this fixes.
+2. **Spurious internal blocks exist on clean divergent data**
+   (~13/30 rows flag at default cost — the DP dodges JC69 stop
+   clusters; fs_enc=80 < 2·stop_pen=120). `codon_refine_sel_cpp` got an
+   `fs` override; at `fs=120` spurious-flag damage on clean data ≈ 0
+   (SPS 0.970 vs backbone 0.974, phase 1.000) while genuine flagged
+   rows still emit events. Auto passes `fs = 120`.
+3. **`sel_identity_place` content-loss bug fixed**: unflagged rows used
+   to drop residues living in insertion columns (terminal partials);
+   they are now re-emitted as edge `ins` blocks.
+
+Flag audit numbers (diag grid, gw=40): compensated cfg — precision
+~0.5–0.6, recall ~0.5–0.7; len%%3 recall was 0.11–0.64 with 11–17
+false fires on trim-only data where encode fires 0 (terminal blocks
+excluded). **Residual honest limit: the phase DP does not localize
+emitted events (fsR ~0.005–0.18 vs truth sites), so auto's SPS gain on
+compensated data is ~0 while phase drops — event localization is R6,
+not a flag problem.**
 
 **R5. Local-frame protein backbone — flagship. [M–L, package-side
 composition]** Fix the root cause of the pfs=0.2 collapse:
@@ -138,6 +166,7 @@ discipline, `msa_rcpp.cpp` shims are package code.
 
 On the 31 real loci (`bench_real_variants.R`, 2026-10-19):
 `msa_codon_protein` holds phase=1.000 everywhere (median 0.24 s), but
-`+ refine="auto"` drops phase to median 0.524 — ~52% of real sequences
-carry terminal partials, which the `nchar%%3` flag cannot distinguish
-from internal frameshifts. The guided flag is the unblocking step.
+the old `nchar%%3` auto flag dropped phase to median 0.524 — ~52% of
+real sequences carry terminal partials. With the R4 guided flag
+(2026-10-21 re-run) `refine="auto"` is phase-neutral on ragged loci
+(flags ~0–1/50 rows; verified RAG1A/PNOC/A2AB ≈1.000).
