@@ -87,27 +87,88 @@ verbatim (an identity `Place`), so:
   stop-codon counts, which fire on every row at high divergence —
   evaluated and rejected).
 
-## 2.3 Benchmark design
+## 2.3 Benchmark datasets and design
 
-Two axes, reported separately because they measure different things.
+Two axes, reported separately because they measure different things:
+axis A measures **accuracy against known truth**, axis B measures
+**scale and structural correctness on real data**.
 
-**Axis A — simulation with ground truth.** Coding alignments are
-evolved along random trees (JC69, indel rate 0.02, per-indel
-frameshift probability `pfs ∈ {0, 0.2}`) at tree-depth divergence
-`d ∈ {0.1, 0.3}`, n ∈ {20, 50}, 5 replicates = 40 datasets
-(`bench/simulate_codon.R`, seeded). Inferred alignments are scored
-against the true alignment: **SPS** (fraction of true residue pairs
-correctly co-columned), **TC** (fraction of fully correct columns),
-and frameshift-event precision/recall.
+### Axis A — simulated CDS with exact ground truth
 
-**Axis B — real data, scale + structure.** The 31 classic mammalian
-marker loci of Upham et al. (2019): a head-to-head tier (n = 50/locus,
-all tools) and a full-scale tier (all sequences, `msa_*` only).
-Metrics: runtime, % indel runs multiple of 3, codon phase purity
-(fraction of columns whose non-gap bases share a codon phase).
+Simulator (`bench/simulate_codon.R`, all runs seeded and tagged).
 
-Tools: genoaligner modes, MACSE v2.07, DECIPHER (`AlignTranslation`,
-`AlignSeqs`), MAFFT 7.525, PRANK-codon.
+* **Phylogeny.** Random Yule trees (`ape::rtree`), branch lengths
+  scaled so the mean root-to-tip depth equals the target divergence
+  `d`; pairwise tip divergence therefore approaches ~2`d`.
+* **Root sequence.** 300 random codons (900 nt), in-frame stop codons
+  resampled — a clean, translate-able ancestor.
+* **Point evolution.** JC69 per site per branch:
+  `p_sub = 1 − exp(−bl)`.
+* **Indel model.** Poisson count `rate · bl · L` per branch
+  (`rate = 0.02`/site/unit); 50% deletions, 50% insertions. With
+  probability `pfs` an indel is a **frameshift**: length drawn from
+  {1, 2, 4, 5, 7, 8, 10} nt (geometrically decaying). Otherwise it is
+  in-frame: `3 × (geometric(0.4) + 1)` nt. `pfs = 0.2` deliberately
+  over-represents frameshifts vs empirical CDS rates — the point is to
+  stress-test the frameshift machinery, not to mimic base rates.
+* **Ground truth.** Every site carries a stable column id; insertion
+  sites receive fractional ids interpolated between their flanking
+  ancestral columns, so sorting all tip ids recovers the true column
+  order exactly. Insertions on different branches are distinct,
+  non-homologous columns — correctly scored as such. The true MSA is
+  the n × W placement matrix; per-tip indel events (with anchor
+  residue ordinal and true column) are exported for frameshift
+  scoring.
+* **Grid.** `n ∈ {20, 50}` × `d ∈ {0.1, 0.3}` × `pfs ∈ {0, 0.2}` ×
+  5 replicates = **40 datasets**. `d = 0.1` approximates typical
+  mammalian-ortholog divergence; `d = 0.3` (~0.6 substitutions/site
+  pairwise) is intentionally adversarial.
+
+### Axis B — real mammalian loci
+
+The 31 classic marker loci used by Upham et al. (2019) for the
+mammalian species tree — curated orthologous CDS, one unaligned FASTA
+per locus (`bench/data/genes_final/`).
+
+* **Sizes.** 19,336 sequences total; 140–3,559 per locus (median
+  386); lengths 200–82,292 bp (the max is a single outlier record in
+  BRCA1 — real-data messiness, retained). Per-locus statistics in
+  Table S1 (`paper/supp_loci.tsv`).
+* **Genetic codes.** COI, CYTB, ND1, ND2 aligned under NCBI code 2
+  (vertebrate mitochondrial); the remaining 27 under code 1.
+* **Messiness is the point.** *Every* locus contains sequences whose
+  length is not a multiple of 3 (median 51% of sequences per locus) —
+  partial CDS and trimming artifacts are the rule in real data, not
+  the exception. This single property already disqualifies
+  PRANK-codon, which requires all-mult-3 input (§3.2).
+* **Head-to-head tier.** A fixed uniform subsample of n = 50/locus
+  (seed 42, written to `out/subsets/*.in.fa`) shared verbatim by all
+  tools, so runtimes and structural metrics are directly comparable.
+* **Full-scale tier.** All sequences per locus, genoaligner only —
+  competitor runtimes at n > 3,000 are infeasible (MACSE already
+  exceeds 1 h on some n = 50 loci); reported as a feasibility result.
+
+### Metrics
+
+* **SPS** — fraction of true residue–residue column pairs reproduced
+  (accuracy).
+* **TC** — fraction of true columns reproduced exactly across all rows.
+* **Frameshift recall / precision** — a true fs event is recovered if
+  the inferred alignment places a non-mult-3 gap run overlapping its
+  anchor residue (±3 columns) in the same row; precision is the
+  fraction of inferred non-mult-3 gap runs that overlap a true event
+  anchor.
+* **Codon phase purity** — fraction of alignment columns whose non-gap
+  bases all share one codon phase (1.0 = every column is internally
+  in-frame).
+* **% indels mult-3** — fraction of gap runs whose length is a
+  multiple of 3.
+* Runtime (wall seconds per dataset/locus).
+
+Tools: genoaligner modes (`msa_codon` codon/protein backbones with and
+without selective refinement, `msa_align`), MACSE v2.07, DECIPHER
+(`AlignTranslation`, `AlignSeqs`), MAFFT 7.525 (`--auto`), PRANK
+v.250331 (`-codon -once`).
 
 ## 2.4 Positioning
 
