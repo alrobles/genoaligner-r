@@ -120,7 +120,7 @@ in-frame. Flagging on stop counts was rejected: at div = 0.3 JC69
 produces stops on every row, so the flag degenerates to global refine.
 
 Per-dataset results (small grid): on pfs = 0.2, `msa_codon_auto` beats
-plain `msa_codon` on SPS in 19/20 datasets (mean ≈ +0.10); on the
+plain `msa_codon` on SPS in 20/20 datasets (mean ≈ +0.137); on the
 protein backbone, `msa_codon_protein_auto` ≥ `msa_codon_protein` in
 ~13/20 datasets and recovers fs_recall ≈ 0.3–0.5 (vs 0 un-refined)
 with identical output on pfs = 0. Note: the engine forces an internal
