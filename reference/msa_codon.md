@@ -44,13 +44,17 @@ msa_codon(
 
 - refine:
 
-  Logical; run the stage-2 frameshift refinement pass.
+  Frameshift refinement. `FALSE` (default): no stage-2 pass; `TRUE`: run
+  it on every row (helps sequences with true frameshifts but costs
+  accuracy on clean CDS); `"auto"`: selective — only sequences whose
+  length is not a multiple of 3 may produce frameshift event columns, so
+  in-frame input is returned exactly as the un-refined backbone.
 
 - backbone:
 
   How the alignment backbone is built. `"codon"` (default) tokenizes
   codons and aligns over the codon substitution matrix. `"protein"`
-  translates each sequence in its best frame, aligns at amino-acid level
+  translates each sequence in frame 0, aligns at amino-acid level
   ([`msa_align`](https://alrobles.github.io/genoaligner-r/reference/msa_align.md)
   with `mode = "protein"`), then back-projects to a codon grid — more
   accurate at high nucleotide divergence, with the same whole-codon

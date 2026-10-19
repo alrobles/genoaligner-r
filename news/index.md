@@ -15,6 +15,15 @@
   codons) are kept as end insertion columns and counted in `qc$partial`;
   `refine = TRUE` runs the stage-2 codon refinement on the
   back-projected grid.
+- `msa_codon(refine = "auto")` — selective stage-2 refinement: only
+  sequences whose length is not a multiple of 3 may emit frameshift
+  event columns (`codon_refine_sel_cpp` runs the per-row phase DP on
+  flagged rows against the full profile; every other row contributes its
+  backbone placement verbatim). In-frame input is returned exactly as
+  the un-refined backbone, so “auto” cannot degrade clean CDS — on
+  simulated frameshift data it improves SPS over the un-refined path and
+  recovers frameshift events (mean fs_recall ≈ 0.3–0.5 on the protein
+  backbone, ≈ 0.1 on the codon backbone).
 
 ## genoaligner 2.0.0
 

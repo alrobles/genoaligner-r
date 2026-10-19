@@ -90,13 +90,18 @@ row names of the aligned matrix and FASTA output.</p></dd>
 
 
 <dt id="arg-refine">refine<a class="anchor" aria-label="anchor" href="#arg-refine"></a></dt>
-<dd><p>Logical; run the stage-2 frameshift refinement pass.</p></dd>
+<dd><p>Frameshift refinement. <code>FALSE</code> (default): no stage-2
+pass; <code>TRUE</code>: run it on every row (helps sequences with true
+frameshifts but costs accuracy on clean CDS); <code>"auto"</code>:
+selective — only sequences whose length is not a multiple of 3 may
+produce frameshift event columns, so in-frame input is returned
+exactly as the un-refined backbone.</p></dd>
 
 
 <dt id="arg-backbone">backbone<a class="anchor" aria-label="anchor" href="#arg-backbone"></a></dt>
 <dd><p>How the alignment backbone is built. <code>"codon"</code>
 (default) tokenizes codons and aligns over the codon substitution
-matrix. <code>"protein"</code> translates each sequence in its best frame,
+matrix. <code>"protein"</code> translates each sequence in frame 0,
 aligns at amino-acid level (<code><a href="msa_align.html">msa_align</a></code> with
 <code>mode = "protein"</code>), then back-projects to a codon grid — more
 accurate at high nucleotide divergence, with the same whole-codon
