@@ -49,9 +49,12 @@ A **pairwise** aligner *and* a **multiple** aligner over the same core:
   restricts each realignment to a band around Fourier-detected homology
   anchors (MAFFT `FFT-NS-i` class).
 - **`msa_codon()`** — codon-aware MSA (MACSE-class): whole-codon indels
-  preserve the reading frame by construction; `refine = TRUE` runs a stage-2
-  frameshift pass for sequences that truly carry frameshifts. NCBI genetic
-  codes 1 (standard) and 2 (vertebrate mitochondrial — CYTB/COI/ND).
+  preserve the reading frame by construction; `refine = "auto"` runs a
+  selective stage-2 frameshift pass on rows whose internal codon tiling
+  leaves held-out blocks (guided re-tokenization evidence — terminal
+  partial codons never fire), and `refine = TRUE` runs it on every row.
+  NCBI genetic codes 1 (standard) and 2 (vertebrate mitochondrial —
+  CYTB/COI/ND).
 
 `msa_*` return a `genoaligner_msa` object carrying the aligned matrix plus
 per-sequence QC (reading frame, stop codons, partial codons) — the QC the
